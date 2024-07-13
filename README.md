@@ -31,6 +31,8 @@ VirtFolder повторяет эту структуру, используя ан
 
 Пример показан на первом снимке, карточка вложена в папки `DNAT` и `iptables`.
 
+![virt_folder_structure](./Images/virt_folder_structure.jpg)
+
 ## Tree View
 
 При вызове плагина, слева отображается Tree View, включающий все папки и файлы.
