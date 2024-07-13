@@ -1,0 +1,11 @@
+{
+	"id": "obsidian-virt-folder",
+	"name": "VirtFolder",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Creating a hierarchical structure like Luhmann's Zettelkasten",
+
+	"author": "mr.grogrig",
+	"authorUrl": "https://github.com/gr0grig",
+	"isDesktopOnly": true
+}
