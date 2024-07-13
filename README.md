@@ -1,2 +1,4 @@
 # obsidian-virt-folder
-Creating a hierarchical structure like Luhmann's Zettelkasten
+Плагин для создания иерархической структуры в Obsidian. 
+
+![virt_folder_example](./Images/virt_folder_example.png)
