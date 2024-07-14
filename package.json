@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "virt-folder",
 	"version": "1.0.1",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Creating a hierarchical structure like Luhmann's Zettelkasten",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
