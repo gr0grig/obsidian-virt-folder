@@ -7,6 +7,7 @@ export class BaseScanner
     top_list: string[] = [];
     orphans_list: string[] = [];
     last_active: string[] = ["1"];
+    filter:string[] = [];
 
     constructor(private app: App) { }
 
@@ -39,21 +40,62 @@ export class BaseScanner
         this.restore_utime(old_list)
     }
 
+    set_filter(filter:string[])
+    {
+        this.filter = filter;
+    }
+
+    get_filtred_count()
+    {
+        return this.app.vault.getMarkdownFiles().length - this.get_filted_list().length;
+    }
+
+    get_filted_list()
+    {
+        return this.app.vault.getMarkdownFiles().filter( (file) => 
+        {
+            for (let filter of this.filter)
+            {
+                if (file.path.startsWith(filter)) return false;
+            }
+
+            return true;
+        });
+    }
+
     init_note_list()
     {
         this.note_list = {}
 
         // create empty notes
-        for (let file of this.app.vault.getMarkdownFiles())
+        for (let file of this.get_filted_list())
         {
             let file_id = file.path
             this.note_list[file_id] = new OneNote(file_id, file.stat.mtime, file.stat.ctime, file.basename);
         }
     }
 
+    filter_note_list()
+    {
+        // convert path separator to / ?
+
+        let filter = 'Templates'
+
+        for (let file_id in this.note_list)
+        {
+            //let file = this.note_list[file_id];
+
+            if(file_id.startsWith(filter))
+            {
+                console.log('delete ', file_id);
+                delete this.note_list[file_id];
+            }
+        }
+    }
+
     build_links()
     {
-        for (let file of this.app.vault.getMarkdownFiles())
+        for (let file of this.get_filted_list())
         {
             let file_id = file.path
 

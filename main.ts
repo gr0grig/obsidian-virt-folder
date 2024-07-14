@@ -6,16 +6,21 @@ import { VF_SelectFile } from './select_file_modal';
 import { VF_SelectPropModal  } from './select_prop_modal';
 import { VIEW_TYPE_VF, RIBBON_ICON, VirtFolderView as VirtFolderView } from 'tree_view';
 import { YamlParser } from 'yaml_parser';
+import { VirtFolderSettingTab, VirtFolderSettings, DEFAULT_SETTINGS } from 'settings';
 
 export default class VirtFolderPlugin extends Plugin
 {
 	data: NoteData;
 	yaml: YamlParser;
-
+	settings: VirtFolderSettings;
+	
 	async onload()
 	{
 		this.data = new NoteData(this.app);
 		this.yaml = new YamlParser(this.app);
+
+		await this.loadSettings(); // order is important
+		this.addSettingTab(new VirtFolderSettingTab(this.app, this));
 
 		this.registerView(
 			VIEW_TYPE_VF,
@@ -78,6 +83,14 @@ export default class VirtFolderPlugin extends Plugin
 			this.registerEvent(this.app.vault.on("delete", this.onDeleteFile));
 			this.registerEvent(this.app.vault.on("rename", this.onRenameFile));
 		});
+	}
+
+	async loadSettings() {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
 	}
 
 	updateActiveFile()
@@ -188,14 +201,9 @@ export default class VirtFolderPlugin extends Plugin
 
 		let file = this.app.workspace.getActiveFile();
 		if(!file) return;
-		
-		//let path = this.data.base.get_shortest_path(file.path);
-		//if(path) this.revealFile(path);
 
 		let path = this.data.base.get_next_path(file.path);
 		if(path) this.revealFile(path);
-
-		//this.update_data();
 	}
 
 	updateUsedTime(file_id:string)

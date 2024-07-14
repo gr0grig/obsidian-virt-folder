@@ -1,4 +1,4 @@
-import { App, TFile, FrontMatterCache, FrontmatterLinkCache} from 'obsidian';
+import { App, TFile } from 'obsidian';
 import { BaseScanner } from 'base_scanner';
 
 export class NoteData
