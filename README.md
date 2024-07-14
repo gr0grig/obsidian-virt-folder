@@ -8,7 +8,7 @@
 
 > https://github.com/gr0grig/obsidian-virt-folder/
 
-## Иерархия как в архиве Лумана
+## Иерархия в архиве Лумана
 
 ![zettelkasten_structure](./Images/zettelkasten_structure.jpg)
 
