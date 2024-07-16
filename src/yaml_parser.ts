@@ -15,7 +15,7 @@ export class YamlParser
 		new Notice(msg);
 	}
 
-    _parse_frontmatter(front:any, selected: string, prop: string)
+    _fm_add_link(front:any, selected: string, prop: string)
     {
         let file = this.app.vault.getFileByPath(selected);
         if(!file) return;
@@ -51,10 +51,10 @@ export class YamlParser
     {
         let file = this.app.workspace.getActiveFile();
         if(!file) return;
-        this.app.fileManager.processFrontMatter(file, (fm) => { this._parse_frontmatter(fm, file_id, yamlProp); });
+        this.app.fileManager.processFrontMatter(file, (fm) => { this._fm_add_link(fm, file_id, yamlProp); });
     }
 
-    _parse_frontmatter_2(front:any, selected: string, prop: string, old_link:string)
+    _fm_replace_link(front:any, selected: string, prop: string, old_link:string)
     {
         let file = this.app.vault.getFileByPath(selected);
         if(!file) return;
@@ -67,10 +67,8 @@ export class YamlParser
             formated_link = `[${link}](${link})`;
         }
         
-        // add link to Folders
         if (prop in front && front[prop])
         {
-            // check wiki and md ?
             if(front[prop].contains(formated_link))
             {
                 this.showMessage(`${prop}'s link already exist`);
@@ -83,7 +81,6 @@ export class YamlParser
                 return;
             }
 
-            // replace old one
             let i = front[prop].indexOf(old_link);
             front[prop][i] = formated_link;
             this.showMessage(`Set ${prop}: ${link}`);
@@ -98,10 +95,10 @@ export class YamlParser
     {
         let file = this.app.workspace.getActiveFile();
         if(!file) return;
-        this.app.fileManager.processFrontMatter(file, (fm) => { this._parse_frontmatter_2(fm, file_id, yamlProp, old_link); });
+        this.app.fileManager.processFrontMatter(file, (fm) => { this._fm_replace_link(fm, file_id, yamlProp, old_link); });
     }
 
-    _parse_frontmatter_3(front:any, prop: string)
+    _fm_get_links(front:any, prop: string)
     {
         if (prop in front && front[prop])
         {
@@ -117,10 +114,10 @@ export class YamlParser
     {
         let file = this.app.workspace.getActiveFile();
         if(!file) return;
-        this.app.fileManager.processFrontMatter(file, (fm) => { callback(this._parse_frontmatter_3(fm, yamlProp)); });
+        this.app.fileManager.processFrontMatter(file, (fm) => { callback(this._fm_get_links(fm, yamlProp)); });
     }
 
-    _parse_frontmatter_4(front:any, prop: string, old_link:string)
+    _fm_remove_link(front:any, prop: string, old_link:string)
     {
         if (prop in front && front[prop])
         {
@@ -140,7 +137,7 @@ export class YamlParser
     {
         let file = this.app.workspace.getActiveFile();
         if(!file) return;
-        this.app.fileManager.processFrontMatter(file, (fm) => { this._parse_frontmatter_4(fm, yamlProp, old_link); });
+        this.app.fileManager.processFrontMatter(file, (fm) => { this._fm_remove_link(fm, yamlProp, old_link); });
     }
    
 };

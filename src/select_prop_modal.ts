@@ -11,7 +11,7 @@ function get_link_base(link:string)
     */
 
     let regexp_1 = /(?:\[\[(.+?)\||\[\[(.+?)\]\]|\[.+?\]\((.+?)\))/;
-    let result = null
+    let result = null;
     let match = regexp_1.exec(link);
 
     if (match)

@@ -4,7 +4,7 @@ import { data, active_id } from './components/stores';
 import { NoteData } from './data';
 import { VF_SelectFile } from './select_file_modal';
 import { VF_SelectPropModal  } from './select_prop_modal';
-import { VIEW_TYPE_VF, RIBBON_ICON, VirtFolderView as VirtFolderView } from 'tree_view';
+import { VIEW_TYPE_VF, VirtFolderView as VirtFolderView } from 'tree_view';
 import { YamlParser } from 'yaml_parser';
 import { VirtFolderSettingTab, VirtFolderSettings, DEFAULT_SETTINGS } from 'settings';
 
@@ -27,47 +27,43 @@ export default class VirtFolderPlugin extends Plugin
 			(leaf) => new VirtFolderView(leaf, this)
 		  );
 
-		this.addRibbonIcon(RIBBON_ICON, "Activate view", () => {
-			this.activateView();
-		});
-
 		this.addCommand({
-			id: "vf_reveal_active_file",
-			name: "Reveal active file in folder's tree",
-			callback: () => {
-			  this.VF_RevealActiveFile();
-			},
-		});
-
-		this.addCommand({
-			id: "vf_open_tree_view",
-			name: "Open tree view",
+			id: "open_tree_view",
+			name: "Show tree",
 			callback: () => {
 			  this.VF_OpenTreeView();
 			},
 		});
  
 		this.addCommand({
-			id: "vf_add_folder",
-			name: "Add folder to YAML",
+			id: "add_folder",
+			name: "Add folder",
 			callback: () => {
 				this.VF_AddFolder();
 			},
 		});
 
 		this.addCommand({
-			id: "vf_replace_folder",
-			name: "Replace folder in YAML",
+			id: "replace_folder",
+			name: "Move folder",
 			callback: () => {
 				this.VF_MoveFolder();
 			},
 		});
 
 		this.addCommand({
-			id: "vf_remove_folder",
-			name: "Remove folder from YAML",
+			id: "remove_folder",
+			name: "Delete folder",
 			callback: () => {
 				this.VF_RemoveFolder();
+			},
+		});
+
+		this.addCommand({
+			id: "reveal_active_file",
+			name: "Reveal file",
+			callback: () => {
+			  this.VF_RevealActiveFile();
 			},
 		});
 

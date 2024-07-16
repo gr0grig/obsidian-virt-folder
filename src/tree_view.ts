@@ -3,13 +3,13 @@ import Component from "./components/Component.svelte";
 import { plugin } from './components/stores';
 import VirtFolderPlugin  from './main';
 
-export const RIBBON_ICON = "folder-tree";
+export const TREE_ICON = "folder-tree";
 export const VIEW_TYPE_VF = "virt-folder-view";
 
 export class VirtFolderView extends ItemView
 {
 	component: Component;
-	icon = RIBBON_ICON;
+	icon = TREE_ICON;
 
 	constructor(leaf: WorkspaceLeaf, private plugin: VirtFolderPlugin) {
 		super(leaf);
@@ -20,7 +20,7 @@ export class VirtFolderView extends ItemView
 	}
 
 	getDisplayText() {
-		return "VirtFolder TreeView";
+		return "VirtFolder";
 	}
 
   async onOpen() {

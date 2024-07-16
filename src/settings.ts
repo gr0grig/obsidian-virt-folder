@@ -26,7 +26,6 @@ export class VirtFolderSettingTab extends PluginSettingTab
 	{
 		let { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl("h2", { text: "VirtFolder Settings" });
 	
 		// validate on change !!
 
@@ -56,7 +55,7 @@ export class VirtFolderSettingTab extends PluginSettingTab
 		});
 
 		new Setting(containerEl)
-		.setName("Ignored Files")
+		.setName("Ignored files")
 		.addText((text: TextComponent) =>
 		{
 			text.setValue('0').setDisabled(true);

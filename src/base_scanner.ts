@@ -83,11 +83,8 @@ export class BaseScanner
 
         for (let file_id in this.note_list)
         {
-            //let file = this.note_list[file_id];
-
             if(file_id.startsWith(filter))
             {
-                console.log('delete ', file_id);
                 delete this.note_list[file_id];
             }
         }
