@@ -8,8 +8,25 @@ export class BaseScanner
     orphans_list: string[] = [];
     last_active: string[] = ["1"];
     filter:string[] = [];
+    prop_name:string;
+    prop_regexp:RegExp;
 
-    constructor(private app: App) { }
+    constructor(private app: App, prop_name:string)
+    {
+        this.set_prop_name(prop_name);
+    }
+
+    set_prop_name(prop_name:string)
+    {
+        this.prop_name = prop_name;
+        let regexp_str = `^${prop_name}(\\.\\d+){0,1}$`;        
+        this.prop_regexp = new RegExp(regexp_str);
+    }
+
+    test_prop_name(prop_name:string)
+    {
+        return this.prop_regexp.test(prop_name.trim());
+    }
 
     restore_utime(old_list: any)
     {
@@ -103,8 +120,7 @@ export class BaseScanner
             {
                 for(let link of metadata.frontmatterLinks)
 				{
-                    let regexp_1 = /((Folders)|(Source))(\.\d+){0,1}/;
-                    if (!regexp_1.test(link.key)) continue;
+                    if (!this.test_prop_name(link.key)) continue;
 
                     let link_file = this.app.metadataCache.getFirstLinkpathDest(link.link, '');
                     if(!link_file) continue;

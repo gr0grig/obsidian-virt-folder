@@ -4,11 +4,13 @@ import VirtFolderPlugin  from './main';
 export interface VirtFolderSettings
 {
 	ignorePath: string;
+	propertyName: string;
 }
 
 export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> = 
 {
-	ignorePath: ''
+	ignorePath: '',
+	propertyName: 'Folders',
 };
 
 export class VirtFolderSettingTab extends PluginSettingTab
@@ -29,15 +31,39 @@ export class VirtFolderSettingTab extends PluginSettingTab
 	
 		// validate on change !!
 
-		let default_value = this.plugin.settings.ignorePath;
-	
+		new Setting(containerEl)
+		.setName("YAML property")
+		.setDesc("The name can contain letters, numbers, minus sign, underscore and dots.")
+		.addText((text: TextComponent) =>
+		{
+			text.setValue(this.plugin.settings.propertyName);
+			text.setPlaceholder('Folders')
+			text.onChange(async (value) =>
+			{
+				let style = text.inputEl.style;
+
+				if(this.is_valid_prop_name(value))
+				{
+					style.borderColor = '';
+
+					this.plugin.settings.propertyName = value;
+					await this.plugin.saveSettings();
+
+					this.update_prop_name(value);
+				}else{
+					style.borderColor = this.get_css_var('--background-modifier-error');
+				}
+			});
+		});
+
+
 		new Setting(containerEl)
 		.setName("List of ignored paths")
 		.setDesc("Each line is interpreted as the start of an ignored path")
 		.addTextArea((textArea: TextAreaComponent) =>
 		{
 			textArea
-				.setValue(default_value)
+				.setValue(this.plugin.settings.ignorePath)
 				.setPlaceholder('Enter one or more paths relative to the archive root')
 				.onChange(async (value) =>
 				{
@@ -91,5 +117,31 @@ export class VirtFolderSettingTab extends PluginSettingTab
 	init_settings()
 	{
 		this.update_filter(this.plugin.settings.ignorePath);
+		this.update_prop_name(this.plugin.settings.propertyName);
 	}
+
+	is_valid_prop_name(name:string): boolean
+	{
+		let regexp = /^[\w.-]+$/;
+		return regexp.test(name);
+	}
+
+	update_prop_name(name:string)
+	{
+		if (!this.is_valid_prop_name(name))	return;
+		this.plugin.data.base.set_prop_name(name);
+		this.update_note_list();
+	}
+
+	get_css_var(variable:string)
+	{
+		let el = document.querySelector('body');
+		if (!el) return '';
+
+		let style = window.getComputedStyle(el);
+		if (!style) return '';
+
+		return style.getPropertyValue(variable);
+	}
+
 }

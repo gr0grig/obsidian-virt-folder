@@ -33,16 +33,14 @@ interface NoteLink
 export class VF_SelectPropModal  extends SuggestModal<NoteLink>
 {
     useMarkdownLinks: boolean;
-    yamlProp: string;
     prop_list: string[];
 
-	constructor(app:App, private base: BaseScanner, private yaml: YamlParser, private onSubmit: (result: string) => void)
+	constructor(app:App, private yamlProp:string, private base: BaseScanner, private yaml: YamlParser, private onSubmit: (result: string) => void)
 	{
 		super(app);
 		
 		this.useMarkdownLinks = ((this.app.vault as any).getConfig('useMarkdownLinks'));
 		this.setPlaceholder('Select one to remove');
-        this.yamlProp = 'Folders';
 	}
 
     open()

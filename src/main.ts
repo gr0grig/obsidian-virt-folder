@@ -16,10 +16,11 @@ export default class VirtFolderPlugin extends Plugin
 	
 	async onload()
 	{
-		this.data = new NoteData(this.app);
+		await this.loadSettings(); // order is important
+
+		this.data = new NoteData(this);
 		this.yaml = new YamlParser(this.app);
 
-		await this.loadSettings(); // order is important
 		this.addSettingTab(new VirtFolderSettingTab(this.app, this));
 
 		this.registerView(
@@ -223,7 +224,7 @@ export default class VirtFolderPlugin extends Plugin
 		new VF_SelectFile(this.app, this.data.base, (file_id:string) =>
 			{
 				// 2. add to yaml
-				this.yaml.add_link('Folders', file_id);
+				this.yaml.add_link(this.settings.propertyName, file_id);
 				this.updateUsedTime(file_id);
 				this.update_data();
 			}
@@ -236,13 +237,13 @@ export default class VirtFolderPlugin extends Plugin
 		if(!file) return;
 
 		// 1. select old link
-		new VF_SelectPropModal (this.app, this.data.base, this.yaml, (old_link:string) =>
+		new VF_SelectPropModal (this.app, this.settings.propertyName, this.data.base, this.yaml, (old_link:string) =>
 			{
 				// 2. select new link
 				new VF_SelectFile(this.app, this.data.base, (file_id:string) =>
 					{
 						// 3. replace link
-						this.yaml.replace_link('Folders', old_link, file_id);
+						this.yaml.replace_link(this.settings.propertyName, old_link, file_id);
 						this.updateUsedTime(file_id);
 						this.update_data();
 					}
@@ -254,10 +255,10 @@ export default class VirtFolderPlugin extends Plugin
 	VF_RemoveFolder()
 	{
 		// 1. select old link
-		new VF_SelectPropModal (this.app, this.data.base, this.yaml, (old_link:string) =>
+		new VF_SelectPropModal (this.app, this.settings.propertyName, this.data.base, this.yaml, (old_link:string) =>
 			{
 				// 2. remove it from the list
-				this.yaml.remove_link('Folders', old_link);
+				this.yaml.remove_link(this.settings.propertyName, old_link);
 				this.update_data();
 			}
 		).open();
