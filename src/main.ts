@@ -27,9 +27,12 @@ export default class VirtFolderPlugin extends Plugin
 			(leaf) => new VirtFolderView(leaf, this)
 		  );
 
+		// add cmd - pin folder (icon='folder-heart')
+
 		this.addCommand({
 			id: "open_tree_view",
 			name: "Show tree",
+			icon: "folder-tree",
 			callback: () => {
 			  this.VF_OpenTreeView();
 			},
@@ -38,6 +41,7 @@ export default class VirtFolderPlugin extends Plugin
 		this.addCommand({
 			id: "add_folder",
 			name: "Add folder",
+			icon: "folder-plus",
 			callback: () => {
 				this.VF_AddFolder();
 			},
@@ -46,6 +50,7 @@ export default class VirtFolderPlugin extends Plugin
 		this.addCommand({
 			id: "replace_folder",
 			name: "Move folder",
+			icon: "folder-output",
 			callback: () => {
 				this.VF_MoveFolder();
 			},
@@ -54,6 +59,7 @@ export default class VirtFolderPlugin extends Plugin
 		this.addCommand({
 			id: "remove_folder",
 			name: "Delete folder",
+			icon: "folder-minus",
 			callback: () => {
 				this.VF_RemoveFolder();
 			},
@@ -62,6 +68,7 @@ export default class VirtFolderPlugin extends Plugin
 		this.addCommand({
 			id: "reveal_active_file",
 			name: "Reveal file",
+			icon: "folder-search-2",
 			callback: () => {
 			  this.VF_RevealActiveFile();
 			},

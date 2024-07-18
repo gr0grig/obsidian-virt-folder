@@ -1,6 +1,6 @@
 {
 	"name": "virt-folder",
-	"version": "1.0.2",
+	"version": "0.0.0",
 	"description": "Creating a hierarchical structure like Luhmann's Zettelkasten",
 	"main": "main.js",
 	"scripts": {

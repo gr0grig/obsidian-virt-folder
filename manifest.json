@@ -1,11 +1,11 @@
 {
 	"id": "virt-folder",
 	"name": "VirtFolder",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"minAppVersion": "0.15.0",
 	"description": "Creating a hierarchical structure like Luhmann's Zettelkasten",
 
 	"author": "mr.grogrig",
 	"authorUrl": "https://github.com/gr0grig",
-	"isDesktopOnly": true
+	"isDesktopOnly": false
 }
