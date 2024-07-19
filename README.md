@@ -10,7 +10,7 @@
 
 ## TLDR
 
-https://github.com/user-attachments/assets/b1786586-55e5-4f2a-99c3-84000ca83414
+https://github.com/user-attachments/assets/a4990b31-c8ea-48c8-815a-98521d81fc7d
 
 ## Иерархия в архиве Лумана
 
