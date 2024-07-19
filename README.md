@@ -8,6 +8,10 @@
 
 > https://github.com/gr0grig/obsidian-virt-folder/
 
+## TLDR
+
+https://github.com/user-attachments/assets/b1786586-55e5-4f2a-99c3-84000ca83414
+
 ## Иерархия в архиве Лумана
 
 ![zettelkasten_structure](./Images/zettelkasten_structure.jpg)
