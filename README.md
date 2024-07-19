@@ -2,17 +2,15 @@
 Плагин для создания иерархической структуры в Obsidian.  
 Позволяет быстро находить заметки, перемещаясь в базе как по оглавлению книги.
 
+![virt_folder_example](./Images/virt_folder_example.png)
+
+> https://github.com/gr0grig/obsidian-virt-folder/
+
 ## TLDR
 
 https://github.com/user-attachments/assets/a4990b31-c8ea-48c8-815a-98521d81fc7d
 
 В актуальной версии добавлена настройка игнорируемых директорий и полей YAML.
-
-## На практике
-
-![virt_folder_example](./Images/virt_folder_example.png)
-
-> https://github.com/gr0grig/obsidian-virt-folder/
 
 ## Иерархия в архиве Лумана
 
