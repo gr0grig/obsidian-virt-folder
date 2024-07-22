@@ -2,6 +2,10 @@
 Плагин для создания иерархической структуры в Obsidian.  
 Позволяет быстро находить заметки, перемещаясь в базе как по оглавлению книги.
 
+> [!IMPORTANT]  
+> Если вам нравится этот плагин, помогите с распространением.
+> Расскажите о нём друзьям или напишите в своём блоге. 
+
 ![virt_folder_example](./Images/virt_folder_example.png)
 
 > https://github.com/gr0grig/obsidian-virt-folder/
@@ -74,4 +78,3 @@ VirtFolder повторяет эту структуру, используя ан
 ## Аналоги
 
 https://github.com/levirs565/obsidian-dendron-tree
-
