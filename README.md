@@ -1,12 +1,20 @@
 # VirtFolder plugin
-
-Плагин для создания иерархической структуры в Obsidian.
-
+Плагин для создания иерархической структуры в Obsidian.  
 Позволяет быстро находить заметки, перемещаясь в базе как по оглавлению книги.
+
+> [!IMPORTANT]  
+> Если вам нравится этот плагин, помогите с распространением.  
+> Расскажите друзьям или напишите о нём в своём блоге. 
 
 ![virt_folder_example](./Images/virt_folder_example.png)
 
 > https://github.com/gr0grig/obsidian-virt-folder/
+
+## TLDR
+
+https://github.com/user-attachments/assets/a4990b31-c8ea-48c8-815a-98521d81fc7d
+
+В актуальной версии добавлена настройка полей YAML и игнорируемых директорий.
 
 ## Иерархия в архиве Лумана
 
@@ -70,4 +78,3 @@ VirtFolder повторяет эту структуру, используя ан
 ## Аналоги
 
 https://github.com/levirs565/obsidian-dendron-tree
-
