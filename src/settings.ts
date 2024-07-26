@@ -1,16 +1,19 @@
 import { App, PluginSettingTab, Setting, TextAreaComponent, TextComponent } from 'obsidian';
 import VirtFolderPlugin  from './main';
+//import { ScannerSettings }  from './base_scanner';
 
 export interface VirtFolderSettings
 {
 	ignorePath: string;
 	propertyName: string;
+	titleProp: string;
 }
 
 export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> = 
 {
 	ignorePath: '',
 	propertyName: 'Folders',
+	titleProp: '',
 };
 
 export class VirtFolderSettingTab extends PluginSettingTab
@@ -24,6 +27,13 @@ export class VirtFolderSettingTab extends PluginSettingTab
 		this.init_settings();
 	}
 
+	init_settings()
+	{
+		this.update_filter(this.plugin.settings.ignorePath);
+		this.update_prop_name(this.plugin.settings.propertyName);
+		this.update_title(this.plugin.settings.titleProp);
+	}
+
 	display(): void
 	{
 		let { containerEl } = this;
@@ -32,8 +42,8 @@ export class VirtFolderSettingTab extends PluginSettingTab
 		// validate on change !!
 
 		new Setting(containerEl)
-		.setName("YAML property")
-		.setDesc("The name can contain letters, numbers, minus sign, underscore and dots.")
+		.setName("YAML for  note's folders")
+		.setDesc("The name can contain letters, numbers, minus sign, underscore and dots")
 		.addText((text: TextComponent) =>
 		{
 			text.setValue(this.plugin.settings.propertyName);
@@ -50,6 +60,34 @@ export class VirtFolderSettingTab extends PluginSettingTab
 					await this.plugin.saveSettings();
 
 					this.update_prop_name(value);
+				}else{
+					style.borderColor = this.get_css_var('--background-modifier-error');
+				}
+			});
+		});
+
+
+		// can be empty !!!
+
+		new Setting(containerEl)
+		.setName("YAML for note's title")
+		.setDesc("Leave the field blank to take the title from the file name")
+		.addText((text: TextComponent) =>
+		{
+			text.setValue(this.plugin.settings.titleProp);
+			text.setPlaceholder('Title')
+			text.onChange(async (value) =>
+			{
+				let style = text.inputEl.style;
+
+				if(this.is_empty_str(value) || this.is_valid_prop_name(value))
+				{
+					style.borderColor = '';
+
+					this.plugin.settings.titleProp = value;
+					await this.plugin.saveSettings();
+
+					this.update_title(value);
 				}else{
 					style.borderColor = this.get_css_var('--background-modifier-error');
 				}
@@ -80,6 +118,7 @@ export class VirtFolderSettingTab extends PluginSettingTab
 			textArea.inputEl.setAttr("cols", 40);
 		});
 
+
 		new Setting(containerEl)
 		.setName("Ignored files")
 		.addText((text: TextComponent) =>
@@ -89,24 +128,25 @@ export class VirtFolderSettingTab extends PluginSettingTab
 		});
 
 		this.update_counter();
+
 	}
 
 	update_counter()
 	{
-		let count = this.plugin.data.base.get_filtred_count();
+		let count = this.plugin.base.get_filtred_count();
 		this.counter.setValue(count.toString());
 	}
 
 	update_note_list()
 	{
-		this.plugin.data.base.rescan();
+		this.plugin.base.rescan();
 		this.plugin.update_data();
 	}
 	
 	update_filter(value:string)
 	{
 		let filter = this.parse_text_area(value);
-		this.plugin.data.base.set_filter(filter);
+		this.plugin.base.settings.set_filter(filter);
 	}
 
 	parse_text_area(value:string)
@@ -114,10 +154,9 @@ export class VirtFolderSettingTab extends PluginSettingTab
 		return value.split(/\r|\n/).map(n => n.trim()).filter(n=>n);
 	}
 
-	init_settings()
+	is_empty_str(name:string): boolean
 	{
-		this.update_filter(this.plugin.settings.ignorePath);
-		this.update_prop_name(this.plugin.settings.propertyName);
+		return name === '';
 	}
 
 	is_valid_prop_name(name:string): boolean
@@ -129,8 +168,17 @@ export class VirtFolderSettingTab extends PluginSettingTab
 	update_prop_name(name:string)
 	{
 		if (!this.is_valid_prop_name(name))	return;
-		this.plugin.data.base.set_prop_name(name);
+		this.plugin.base.settings.set_prop(name);
 		this.update_note_list();
+	}
+
+	update_title(value:string)
+	{
+		if (this.is_empty_str(value) || this.is_valid_prop_name(value))	
+		{
+			this.plugin.base.settings.set_title(value);
+			this.update_note_list();
+		}
 	}
 
 	get_css_var(variable:string)
@@ -143,5 +191,4 @@ export class VirtFolderSettingTab extends PluginSettingTab
 
 		return style.getPropertyValue(variable);
 	}
-
 }

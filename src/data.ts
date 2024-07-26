@@ -1,14 +1,11 @@
 import { App, TFile } from 'obsidian';
 import { BaseScanner } from 'base_scanner';
-import VirtFolderPlugin from 'main';
 
 export class NoteData
 {
-    base: BaseScanner;
-
-    constructor(private plugin: VirtFolderPlugin)
+    constructor(private base: BaseScanner)
     {
-        this.base = new BaseScanner(plugin.app, plugin.settings.propertyName);
+        // refector later
     }
 
     onStartApp()

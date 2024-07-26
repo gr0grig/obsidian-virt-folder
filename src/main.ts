@@ -2,6 +2,7 @@ import { TAbstractFile, Plugin, TFile } from 'obsidian';
 import { WorkspaceLeaf } from "obsidian";
 import { data, active_id } from './components/stores';
 import { NoteData } from './data';
+import { BaseScanner } from 'base_scanner';
 import { VF_SelectFile } from './select_file_modal';
 import { VF_SelectPropModal  } from './select_prop_modal';
 import { VIEW_TYPE_VF, VirtFolderView as VirtFolderView } from 'tree_view';
@@ -11,6 +12,7 @@ import { VirtFolderSettingTab, VirtFolderSettings, DEFAULT_SETTINGS } from 'sett
 export default class VirtFolderPlugin extends Plugin
 {
 	data: NoteData;
+	base: BaseScanner;
 	yaml: YamlParser;
 	settings: VirtFolderSettings;
 	
@@ -18,7 +20,8 @@ export default class VirtFolderPlugin extends Plugin
 	{
 		await this.loadSettings(); // order is important
 
-		this.data = new NoteData(this);
+		this.base = new BaseScanner(this.app);
+		this.data = new NoteData(this.base);
 		this.yaml = new YamlParser(this.app);
 
 		this.addSettingTab(new VirtFolderSettingTab(this.app, this));
@@ -116,7 +119,7 @@ export default class VirtFolderPlugin extends Plugin
 
 	update_data()
 	{
-		data.set(this.data.base);
+		data.set(this.base);
 		this.updateActiveFile();
 	}
 
@@ -155,7 +158,7 @@ export default class VirtFolderPlugin extends Plugin
 	  
 	onResolveMetadata = (file: TFile) =>
 	{
-		if (this.data.base.is_same_mtime(file))
+		if (this.base.is_same_mtime(file))
 		{
 			return; 
 		}
@@ -206,13 +209,13 @@ export default class VirtFolderPlugin extends Plugin
 		let file = this.app.workspace.getActiveFile();
 		if(!file) return;
 
-		let path = this.data.base.get_next_path(file.path);
+		let path = this.base.get_next_path(file.path);
 		if(path) this.revealFile(path);
 	}
 
 	updateUsedTime(file_id:string)
     {
-        this.data.base.note_list[file_id].utime = Date.now();
+        this.base.note_list[file_id].utime = Date.now();
     }
 
 	VF_AddFolder()
@@ -221,7 +224,7 @@ export default class VirtFolderPlugin extends Plugin
 		if(!file) return;
 
 		// 1. select file 
-		new VF_SelectFile(this.app, this.data.base, (file_id:string) =>
+		new VF_SelectFile(this.app, this.base, (file_id:string) =>
 			{
 				// 2. add to yaml
 				this.yaml.add_link(this.settings.propertyName, file_id);
@@ -237,10 +240,10 @@ export default class VirtFolderPlugin extends Plugin
 		if(!file) return;
 
 		// 1. select old link
-		new VF_SelectPropModal (this.app, this.settings.propertyName, this.data.base, this.yaml, (old_link:string) =>
+		new VF_SelectPropModal (this.app, this.settings.propertyName, this.base, this.yaml, (old_link:string) =>
 			{
 				// 2. select new link
-				new VF_SelectFile(this.app, this.data.base, (file_id:string) =>
+				new VF_SelectFile(this.app, this.base, (file_id:string) =>
 					{
 						// 3. replace link
 						this.yaml.replace_link(this.settings.propertyName, old_link, file_id);
@@ -255,7 +258,7 @@ export default class VirtFolderPlugin extends Plugin
 	VF_RemoveFolder()
 	{
 		// 1. select old link
-		new VF_SelectPropModal (this.app, this.settings.propertyName, this.data.base, this.yaml, (old_link:string) =>
+		new VF_SelectPropModal (this.app, this.settings.propertyName, this.base, this.yaml, (old_link:string) =>
 			{
 				// 2. remove it from the list
 				this.yaml.remove_link(this.settings.propertyName, old_link);

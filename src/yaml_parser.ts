@@ -1,4 +1,4 @@
-import { App, Notice } from 'obsidian';
+import { App, Notice, TFile } from 'obsidian';
 
 export class YamlParser
 {
@@ -138,8 +138,7 @@ export class YamlParser
         let file = this.app.workspace.getActiveFile();
         if(!file) return;
         this.app.fileManager.processFrontMatter(file, (fm) => { this._fm_remove_link(fm, yamlProp, old_link); });
-    }
-   
+    }    
 };
 
 

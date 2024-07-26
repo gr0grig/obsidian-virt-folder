@@ -1,31 +1,56 @@
 import { App, TFile } from 'obsidian';
 import { OneNote } from 'onenote';
 
+function _is_string(value:any)
+{
+    return typeof value === 'string';
+}
+
+class ScanSettings
+{
+	filter: string[] = [];
+	title: string = '';
+    prop_regexp?:RegExp = undefined;
+
+    set_filter(filter: string[])
+    {
+        this.filter = filter;
+    }
+
+    set_title(title: string)
+    {
+        this.title = title;
+    }
+
+    set_prop(prop: string)
+    {
+		let regexp_str = `^${prop}(\\.\\d+){0,1}$`;
+		this.prop_regexp = new RegExp(regexp_str);
+    }
+
+    is_valid()
+    {
+        return typeof this.prop_regexp !== 'undefined';
+    }
+};
+
 export class BaseScanner
 {
     note_list:  {[id: string] : OneNote} = {};
     top_list: string[] = [];
     orphans_list: string[] = [];
     last_active: string[] = ["1"];
-    filter:string[] = [];
-    prop_name:string;
-    prop_regexp:RegExp;
+    settings: ScanSettings = new ScanSettings();
 
-    constructor(private app: App, prop_name:string)
+    constructor(private app: App)
     {
-        this.set_prop_name(prop_name);
-    }
 
-    set_prop_name(prop_name:string)
-    {
-        this.prop_name = prop_name;
-        let regexp_str = `^${prop_name}(\\.\\d+){0,1}$`;        
-        this.prop_regexp = new RegExp(regexp_str);
     }
 
     test_prop_name(prop_name:string)
     {
-        return this.prop_regexp.test(prop_name.trim());
+        if(!this.settings.prop_regexp) return false;
+        return this.settings.prop_regexp.test(prop_name.trim());
     }
 
     restore_utime(old_list: any)
@@ -49,17 +74,14 @@ export class BaseScanner
 
     rescan()
     {
+        if(!this.settings.is_valid()) return;
+
         let old_list = this.note_list;
         this.init_note_list();
         this.build_links();
         this.build_top();
         this.sort_links();
         this.restore_utime(old_list)
-    }
-
-    set_filter(filter:string[])
-    {
-        this.filter = filter;
     }
 
     get_filtred_count()
@@ -71,13 +93,41 @@ export class BaseScanner
     {
         return this.app.vault.getMarkdownFiles().filter( (file) => 
         {
-            for (let filter of this.filter)
+            for (let filter of this.settings.filter)
             {
                 if (file.path.startsWith(filter)) return false;
             }
 
             return true;
         });
+    }
+
+    get_meta_value(file:TFile, prop:string)
+    {
+        let metadata = this.app.metadataCache.getFileCache(file);
+
+        if(metadata && metadata.frontmatter)
+        {
+            if(prop in metadata.frontmatter)
+            {
+                let value = metadata.frontmatter[prop];
+                return _is_string(value) ? value : null;
+            }
+        }
+    }
+
+    get_note_title(file:TFile)
+    {
+        let name = file.basename;
+        let title = this.get_meta_value(file, this.settings.title);
+        return title ? title : name;
+    }
+
+    link_to_title(value:string)
+    {
+        let link_file = this.app.metadataCache.getFirstLinkpathDest(value, '');
+        if(!link_file) return value;
+        return this.get_note_title(link_file);
     }
 
     init_note_list()
@@ -88,22 +138,7 @@ export class BaseScanner
         for (let file of this.get_filted_list())
         {
             let file_id = file.path
-            this.note_list[file_id] = new OneNote(file_id, file.stat.mtime, file.stat.ctime, file.basename);
-        }
-    }
-
-    filter_note_list()
-    {
-        // convert path separator to / ?
-
-        let filter = 'Templates'
-
-        for (let file_id in this.note_list)
-        {
-            if(file_id.startsWith(filter))
-            {
-                delete this.note_list[file_id];
-            }
+            this.note_list[file_id] = new OneNote(file_id, file.stat.mtime, file.stat.ctime, this.get_note_title(file));
         }
     }
 

@@ -88,7 +88,8 @@ export class VF_SelectPropModal  extends SuggestModal<NoteLink>
 
     renderSuggestion(item: NoteLink, el: HTMLElement)
     {
-        el.createEl('div', {text: item.name});
+        let title = this.base.link_to_title(item.name);
+        el.createEl('div', {text: title});
     }
 
     onChooseSuggestion(item: NoteLink, evt: MouseEvent | KeyboardEvent)
