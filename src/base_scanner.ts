@@ -138,7 +138,10 @@ export class BaseScanner
         for (let file of this.get_filted_list())
         {
             let file_id = file.path
-            this.note_list[file_id] = new OneNote(file_id, file.stat.mtime, file.stat.ctime, this.get_note_title(file));
+            this.note_list[file_id] = new OneNote(
+                file_id, file.stat.mtime, file.stat.ctime,
+                file.basename, this.get_note_title(file)
+            );
         }
     }
 

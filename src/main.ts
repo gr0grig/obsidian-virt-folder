@@ -224,7 +224,7 @@ export default class VirtFolderPlugin extends Plugin
 		if(!file) return;
 
 		// 1. select file 
-		new VF_SelectFile(this.app, this.base, (file_id:string) =>
+		new VF_SelectFile(this, (file_id:string) =>
 			{
 				// 2. add to yaml
 				this.yaml.add_link(this.settings.propertyName, file_id);
@@ -240,10 +240,10 @@ export default class VirtFolderPlugin extends Plugin
 		if(!file) return;
 
 		// 1. select old link
-		new VF_SelectPropModal (this.app, this.settings.propertyName, this.base, this.yaml, (old_link:string) =>
+		new VF_SelectPropModal (this, this.settings.propertyName, (old_link:string) =>
 			{
 				// 2. select new link
-				new VF_SelectFile(this.app, this.base, (file_id:string) =>
+				new VF_SelectFile(this, (file_id:string) =>
 					{
 						// 3. replace link
 						this.yaml.replace_link(this.settings.propertyName, old_link, file_id);
@@ -258,7 +258,7 @@ export default class VirtFolderPlugin extends Plugin
 	VF_RemoveFolder()
 	{
 		// 1. select old link
-		new VF_SelectPropModal (this.app, this.settings.propertyName, this.base, this.yaml, (old_link:string) =>
+		new VF_SelectPropModal (this, this.settings.propertyName, (old_link:string) =>
 			{
 				// 2. remove it from the list
 				this.yaml.remove_link(this.settings.propertyName, old_link);

@@ -3,6 +3,7 @@ export class OneNote
     id: string; // file.path
     link: string;
     name: string;
+    title: string;
     mtime: number;
     utime: number = 0; // created or used as folder
 
@@ -11,11 +12,12 @@ export class OneNote
 	is_pinned: boolean = false;
 
     
-    constructor(id: string, mtime: number, ctime: number, name:string)
+    constructor(id: string, mtime: number, ctime: number, name:string, title:string)
     {
         this.id = id;
         this.mtime = mtime;
         this.name = name;
+        this.title = title;
         this.utime = ctime;
     }
 

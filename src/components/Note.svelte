@@ -50,7 +50,7 @@
 
 			if (note)
 			{
-				title = note.name;
+				title = note.title;
 				childCounter = note.count_children();
 				childList = note.children;
 			}

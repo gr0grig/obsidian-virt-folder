@@ -1,6 +1,7 @@
 import { App, SuggestModal, Notice } from 'obsidian';
 import { BaseScanner } from 'base_scanner';
 import { YamlParser } from 'yaml_parser';
+import  VirtFolderPlugin  from 'main';
 
 function get_link_base(link:string)
 {
@@ -34,18 +35,18 @@ export class VF_SelectPropModal  extends SuggestModal<NoteLink>
 {
     useMarkdownLinks: boolean;
     prop_list: string[];
-
-	constructor(app:App, private yamlProp:string, private base: BaseScanner, private yaml: YamlParser, private onSubmit: (result: string) => void)
+    
+	constructor(private plugin: VirtFolderPlugin, private yamlProp:string, private onSubmit: (result: string) => void)
 	{
-		super(app);
-		
+		super(plugin.app);
+        this.app = plugin.app;
 		this.useMarkdownLinks = ((this.app.vault as any).getConfig('useMarkdownLinks'));
 		this.setPlaceholder('Select one to remove');
 	}
 
     open()
     {
-		this.yaml.get_links(this.yamlProp, (links)=>
+		this.plugin.yaml.get_links(this.yamlProp, (links)=>
 		{
             if(links.length == 0)
 			{
@@ -86,10 +87,15 @@ export class VF_SelectPropModal  extends SuggestModal<NoteLink>
         return notes;
     }
 
+    getItemName(item: NoteLink)
+	{
+		if(this.plugin.settings.cmdSearchBy == 'file') return item.name;
+        return this.plugin.base.link_to_title(item.name);
+	}
+
     renderSuggestion(item: NoteLink, el: HTMLElement)
     {
-        let title = this.base.link_to_title(item.name);
-        el.createEl('div', {text: title});
+        el.createEl('div', {text: this.getItemName(item)});
     }
 
     onChooseSuggestion(item: NoteLink, evt: MouseEvent | KeyboardEvent)

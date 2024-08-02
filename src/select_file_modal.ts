@@ -1,31 +1,49 @@
 import { App, FuzzySuggestModal, Notice, FuzzyMatch } from 'obsidian';
-import { BaseScanner } from 'base_scanner';
+import { OneNote } from 'onenote';
+import  VirtFolderPlugin  from 'main';
 
-interface NotePath
+interface ShowedItem
 {
 	id: string;
 	name: string;
+	title: string;
 	parents: string[];
 	utime: number;
 }
 
-export class VF_SelectFile extends FuzzySuggestModal<NotePath>
+export class VF_SelectFile extends FuzzySuggestModal<ShowedItem>
 {
 	selected: string = '';
 
-	constructor(app:App, private base: BaseScanner, private onSubmit: (result: string) => void)
+	constructor(private plugin: VirtFolderPlugin, private onSubmit: (result: string) => void)
 	{
-		super(app);
+		super(plugin.app);
 		this.setPlaceholder('Type note\'s title');
 	}
 
-	getItems(): NotePath[]
-	{	
-		let notes: NotePath[] = [];
+	getAliases(note: OneNote)
+	{
+		// next time			
+	}
 
-		for (let id in this.base.note_list)
+	getItemName(item: ShowedItem)
+	{
+		if(this.plugin.settings.cmdSearchBy == 'title') return item.title;
+		return item.name;
+	}
+
+	getItemText(item: ShowedItem): string
+	{
+		return this.getItemName(item);
+	}
+
+	getItems(): ShowedItem[]
+	{	
+		let notes: ShowedItem[] = [];
+
+		for (let id in this.plugin.base.note_list)
 		{
-			notes.push(this.base.note_list[id]);
+			notes.push(this.plugin.base.note_list[id]);
 		}
 
 		// sort with update time
@@ -33,11 +51,7 @@ export class VF_SelectFile extends FuzzySuggestModal<NotePath>
 		return notes;
 	}
 
-	getItemText(item: NotePath): string {
-		return item.name;
-	}
-
-	onChooseItem(item: NotePath, evt: MouseEvent | KeyboardEvent): void
+	onChooseItem(item: ShowedItem, evt: MouseEvent | KeyboardEvent): void
 	{
 		this.onSubmit(item.id);
 	}
@@ -48,23 +62,22 @@ export class VF_SelectFile extends FuzzySuggestModal<NotePath>
 
 		for (let id of parents)
 		{
-			let note = this.base.note_by_id(id);
+			let note = this.plugin.base.note_by_id(id);
 			if(!note) continue;
-
-			links.push(note.name);
+			links.push(this.getItemName(note));
 		}
 
         return links;
 	}
 
-	renderSuggestion(item: FuzzyMatch<NotePath>, el: HTMLElement): void 
+	renderSuggestion(item: FuzzyMatch<ShowedItem>, el: HTMLElement): void 
 	{
-		el.createEl('div', {text: item.item.name});
+		el.createEl('div', {text: this.getItemName(item.item)});
         let small = el.createEl('small', {cls: 'vf_search_parents'});	
 
         for(let parent of item.item.parents)
         {
-            let path: any = this.base.get_shortest_path(parent);
+            let path: any = this.plugin.base.get_shortest_path(parent);
             let links = this._format_parents(path);
             let line = small.createEl('div', {cls:'vf_serach_div'});	
 
