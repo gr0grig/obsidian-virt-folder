@@ -1,5 +1,6 @@
 # VirtFolder plugin
 A plugin for creating a hierarchical structure in Obsidian.
+
 Allows you to quickly find notes by navigating the knowledge base like a book table of contents.
 
 ## Example
