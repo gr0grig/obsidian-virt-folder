@@ -20,7 +20,7 @@ export default class VirtFolderPlugin extends Plugin
 	{
 		await this.loadSettings(); // order is important
 
-		this.base = new BaseScanner(this.app);
+		this.base = new BaseScanner(this.app, this);
 		this.data = new NoteData(this.base);
 		this.yaml = new YamlParser(this.app);
 

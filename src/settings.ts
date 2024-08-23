@@ -1,12 +1,22 @@
-import { App, PluginSettingTab, Setting, TextAreaComponent, TextComponent, DropdownComponent } from 'obsidian';
+import { App, PluginSettingTab, Setting, TextAreaComponent, TextComponent, DropdownComponent, ToggleComponent } from 'obsidian';
 import VirtFolderPlugin  from './main';
+
+export enum SortTypes
+{
+    file_name = "file_name",
+    note_title = "note_title",
+	creation_time = "creation_time",
+	modification_time = "modification_time",
+};
 
 export interface VirtFolderSettings
 {
 	ignorePath: string;
 	propertyName: string;
 	titleProp: string;
-	cmdSearchBy: string;
+	cmdShowTitle: boolean;
+	sortTreeBy: SortTypes;
+	sortTreeRev: boolean;
 }
 
 export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> = 
@@ -14,7 +24,9 @@ export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
 	ignorePath: '',
 	propertyName: 'Folders',
 	titleProp: '',
-	cmdSearchBy: 'file',
+	cmdShowTitle: false,
+	sortTreeBy: SortTypes.file_name,
+	sortTreeRev: false,
 };
 
 export class VirtFolderSettingTab extends PluginSettingTab
@@ -97,17 +109,50 @@ export class VirtFolderSettingTab extends PluginSettingTab
 
 
 		new Setting(containerEl)
-		.setName("AAA")
-		.setDesc("BBB")
-		.addDropdown((dp: DropdownComponent) =>
+		.setName("Use title in commands")
+		.setDesc("Display note's title instead of file name when displaying command results")
+		.addToggle( (tg:ToggleComponent) =>
 		{
-			dp.addOption('file', 'File');
-			dp.addOption('title', 'Title')
-			dp.setValue(this.plugin.settings.cmdSearchBy);
-			dp.onChange(async (value) =>
+			tg.setValue(this.plugin.settings.cmdShowTitle);
+			tg.onChange(async (value) =>
 			{
-				this.plugin.settings.cmdSearchBy = value;
+				this.plugin.settings.cmdShowTitle = value;
 				await this.plugin.saveSettings();
+			});
+		});
+
+
+		new Setting(containerEl)
+		.setName("Sorting")
+		.setDesc("Note sorting criteria in the tree view")
+		.addDropdown( (dc:DropdownComponent) =>
+		{
+			for(let key of Object.keys(SortTypes))
+			{
+				dc.addOption(key, key);
+			}
+
+			dc.setValue(this.plugin.settings.sortTreeBy);
+			
+			dc.onChange(async (value) =>
+			{
+				this.plugin.settings.sortTreeBy = SortTypes[value as keyof typeof SortTypes];
+				await this.plugin.saveSettings();
+				this.update_note_list();
+			});
+		});
+		
+
+		new Setting(containerEl)
+		.setName("Reverse sort order")
+		.addToggle( (tg:ToggleComponent) =>
+		{
+			tg.setValue(this.plugin.settings.sortTreeRev);
+			tg.onChange(async (value) =>
+			{
+				this.plugin.settings.sortTreeRev = value;
+				await this.plugin.saveSettings();
+				this.update_note_list();
 			});
 		});
 

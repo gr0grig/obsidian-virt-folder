@@ -28,7 +28,7 @@ export class VF_SelectFile extends FuzzySuggestModal<ShowedItem>
 
 	getItemName(item: ShowedItem)
 	{
-		if(this.plugin.settings.cmdSearchBy == 'title') return item.title;
+		if(this.plugin.settings.cmdShowTitle) return item.title;
 		return item.name;
 	}
 

@@ -89,7 +89,7 @@ export class VF_SelectPropModal  extends SuggestModal<NoteLink>
 
     getItemName(item: NoteLink)
 	{
-		if(this.plugin.settings.cmdSearchBy == 'file') return item.name;
+		if(!this.plugin.settings.cmdShowTitle) return item.name;
         return this.plugin.base.link_to_title(item.name);
 	}
 

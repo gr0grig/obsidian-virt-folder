@@ -1,5 +1,7 @@
 import { App, TFile } from 'obsidian';
 import { OneNote } from 'onenote';
+import  VirtFolderPlugin  from 'main';
+import { SortTypes } from 'settings';
 
 function _is_string(value:any)
 {
@@ -42,7 +44,7 @@ export class BaseScanner
     last_active: string[] = ["1"];
     settings: ScanSettings = new ScanSettings();
 
-    constructor(private app: App)
+    constructor(private app: App, private plugin: VirtFolderPlugin)
     {
 
     }
@@ -116,6 +118,8 @@ export class BaseScanner
         }
     }
 
+    // can we get it from Note class?
+
     get_note_title(file:TFile)
     {
         let name = file.basename;
@@ -128,6 +132,20 @@ export class BaseScanner
         let link_file = this.app.metadataCache.getFirstLinkpathDest(value, '');
         if(!link_file) return value;
         return this.get_note_title(link_file);
+    }
+
+    link_to_ctime(value:string)
+    {
+        let link_file = this.app.metadataCache.getFirstLinkpathDest(value, '');
+        if(!link_file) return 0;
+        return link_file.stat.ctime;
+    }
+
+    link_to_mtime(value:string)
+    {
+        let link_file = this.app.metadataCache.getFirstLinkpathDest(value, '');
+        if(!link_file) return 0;
+        return link_file.stat.mtime;
     }
 
     init_note_list()
@@ -219,7 +237,7 @@ export class BaseScanner
         }
     }
 
-    l_sort(links: string[])
+    old_l_sort(links: string[])
 	{
 		let pinned = [];
 		let normal = [];
@@ -244,6 +262,50 @@ export class BaseScanner
 		normal.sort();
 		return pinned.concat(normal);
 	}
+
+    l_sort(links: string[])
+	{
+        let links_copy: string[] = [...links];
+        let sortBy: SortTypes = this.plugin.settings.sortTreeBy;
+        let sortRev: boolean = this.plugin.settings.sortTreeRev;
+
+        if(sortBy == SortTypes.file_name)
+        {
+            links_copy.sort();
+        }
+
+        if(sortBy == SortTypes.note_title)
+        {
+            links_copy.sort(
+                (a,b) => 
+                {
+                    a = this.link_to_title(a);
+                    b = this.link_to_title(b);
+                    if(a < b) { return -1; }
+                    if(a > b) { return 1; }
+                    return 0;
+                }
+            );
+        }
+
+        if(sortBy == SortTypes.creation_time)
+        {
+            links_copy.sort(
+                (a,b) => {return this.link_to_ctime(a) - this.link_to_ctime(b);}
+            );
+        }
+
+        if(sortBy == SortTypes.modification_time)
+        {
+            links_copy.sort(
+                (a,b) => {return this.link_to_mtime(a) - this.link_to_mtime(b);}
+            );
+        }
+
+        if(sortRev) links_copy.reverse();
+
+        return links_copy;
+    }
 
     sort_links()
     {
