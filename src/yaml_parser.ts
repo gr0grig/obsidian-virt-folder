@@ -1,13 +1,11 @@
 import { App, Notice, TFile } from 'obsidian';
+import  VirtFolderPlugin  from 'main';
 
 export class YamlParser
 {
-    useMarkdownLinks:boolean;
-
-	constructor(private app:App)
+	constructor(private app: App, private plugin: VirtFolderPlugin)
 	{
-		// undocumented
-		this.useMarkdownLinks = ((this.app.vault as any).getConfig('useMarkdownLinks'));
+        
 	}
 
     showMessage(msg: string)
@@ -23,7 +21,7 @@ export class YamlParser
         let link = this.app.metadataCache.fileToLinktext(file, '');
         let formated_link = `[[${link}]]`;
     
-        if(this.useMarkdownLinks)
+        if(!this.plugin.settings.UseWikiLinks)
         {
             formated_link = `[${link}](${link})`;
         }
@@ -62,7 +60,7 @@ export class YamlParser
         let link = this.app.metadataCache.fileToLinktext(file, '');
         let formated_link = `[[${link}]]`;
     
-        if(this.useMarkdownLinks)
+        if(!this.plugin.settings.UseWikiLinks)
         {
             formated_link = `[${link}](${link})`;
         }

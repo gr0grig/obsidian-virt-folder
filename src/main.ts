@@ -22,7 +22,7 @@ export default class VirtFolderPlugin extends Plugin
 
 		this.base = new BaseScanner(this.app, this);
 		this.data = new NoteData(this.base);
-		this.yaml = new YamlParser(this.app);
+		this.yaml = new YamlParser(this.app, this);
 
 		this.addSettingTab(new VirtFolderSettingTab(this.app, this));
 

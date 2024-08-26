@@ -17,6 +17,7 @@ export interface VirtFolderSettings
 	cmdShowTitle: boolean;
 	sortTreeBy: SortTypes;
 	sortTreeRev: boolean;
+	UseWikiLinks: boolean;
 }
 
 export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> = 
@@ -27,6 +28,7 @@ export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
 	cmdShowTitle: false,
 	sortTreeBy: SortTypes.file_name,
 	sortTreeRev: false,
+	UseWikiLinks: true,
 };
 
 export class VirtFolderSettingTab extends PluginSettingTab
@@ -156,7 +158,7 @@ export class VirtFolderSettingTab extends PluginSettingTab
 			});
 		});
 
-
+		
 		new Setting(containerEl)
 		.setName("List of ignored paths")
 		.setDesc("Each line is interpreted as the start of an ignored path")
@@ -190,6 +192,20 @@ export class VirtFolderSettingTab extends PluginSettingTab
 
 		this.update_counter();
 
+
+		new Setting(containerEl)
+		.setName("Use [[WikiLinks]] in YAML")
+		.addToggle( (tg:ToggleComponent) =>
+		{
+			tg.setValue(this.plugin.settings.UseWikiLinks);
+			tg.onChange(async (value) =>
+			{
+				this.plugin.settings.UseWikiLinks = value;
+				await this.plugin.saveSettings();
+				this.update_note_list();
+			});
+		});
+		
 	}
 
 	update_counter()
