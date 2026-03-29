@@ -202,6 +202,10 @@ export class YamlParser
     {
         this.app.fileManager.processFrontMatter(noteFile, (fm) =>
         {
+            if (!Array.isArray(fm[yamlProp])) {
+                fm[yamlProp] = [fm[yamlProp]];
+            }
+
             if(oldParentPath)
             {
                 let rawLink = this._find_link_for_path(fm, yamlProp, oldParentPath);

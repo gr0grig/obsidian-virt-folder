@@ -5994,6 +5994,9 @@ var YamlParser = class {
   }
   move_to_folder(noteFile, yamlProp, oldParentPath, newParentPath) {
     this.app.fileManager.processFrontMatter(noteFile, (fm) => {
+      if (!Array.isArray(fm[yamlProp])) {
+        fm[yamlProp] = [fm[yamlProp]];
+      }
       if (oldParentPath) {
         let rawLink = this._find_link_for_path(fm, yamlProp, oldParentPath);
         if (rawLink) {
