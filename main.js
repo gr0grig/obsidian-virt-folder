@@ -5340,10 +5340,20 @@ function instance($$self, $$props, $$invalidate) {
     plugin2.app.workspace.openLinkText(id2, id2, new_tab);
   }
   function scrollIntoMiddle() {
+    let scrollable = myElement.closest(".view-content");
+    if (!scrollable)
+      return;
     let elementRect = myElement.getBoundingClientRect();
-    let absoluteElementTop = elementRect.top + window.scrollY;
-    let middle = absoluteElementTop - window.innerHeight / 2;
-    myElement.win.scrollTo(0, middle);
+    let containerRect = scrollable.getBoundingClientRect();
+    let elementTopRelative = elementRect.top - containerRect.top + scrollable.scrollTop;
+    let elementHeight = elementRect.height;
+    let containerHeight = containerRect.height;
+    if (elementHeight <= containerHeight) {
+      let targetTop = elementTopRelative - containerHeight / 2 + elementHeight / 2;
+      scrollable.scrollTop = targetTop;
+    } else {
+      scrollable.scrollTop = elementTopRelative;
+    }
   }
   let isDragOver = false;
   function getDragParentId() {
@@ -5462,7 +5472,7 @@ function instance($$self, $$props, $$invalidate) {
       yield expandTransitionWaiter;
     if (!next) {
       if (myElement) {
-        myElement.scrollIntoView({ block: "center" });
+        scrollIntoMiddle();
       }
       return;
     }

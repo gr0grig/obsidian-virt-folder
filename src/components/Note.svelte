@@ -93,13 +93,26 @@
     }
 
 	function scrollIntoMiddle()
-	{
-		//debugger;
-		let elementRect = myElement.getBoundingClientRect();
-		let absoluteElementTop = elementRect.top + window.scrollY;
-		let middle = absoluteElementTop - (window.innerHeight / 2);
-		myElement.win.scrollTo(0, middle);
-	}
+    {
+        let scrollable = myElement.closest('.view-content') as HTMLElement;
+        if (!scrollable) return; // Fallback if not found
+
+        let elementRect = myElement.getBoundingClientRect();
+        let containerRect = scrollable.getBoundingClientRect();
+        let elementTopRelative = elementRect.top - containerRect.top + scrollable.scrollTop;
+        let elementHeight = elementRect.height;
+        let containerHeight = containerRect.height;
+
+
+        if (elementHeight <= containerHeight) {
+            // Center the element if it fits
+            let targetTop = elementTopRelative - (containerHeight / 2) + (elementHeight / 2);
+            scrollable.scrollTop = targetTop;
+        } else {
+            // Align the top of the element with the top of the container if it doesn't fit
+            scrollable.scrollTop = elementTopRelative;
+        }
+    }
 
 	let isDragOver = false;
 
@@ -258,9 +271,7 @@
 		{	
 			if(myElement)
 			{
-				//scrollIntoMiddle();
-				//  "center" | "end" | "nearest" | "start";
-				myElement.scrollIntoView({block: "center"});
+				scrollIntoMiddle();
 			}
 			return;
 		}
