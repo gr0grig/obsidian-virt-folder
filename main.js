@@ -1482,12 +1482,18 @@ var BaseScanner = class {
   }
   get_meta_value(file, prop) {
     let metadata = this.app.metadataCache.getFileCache(file);
-    if (metadata && metadata.frontmatter) {
-      if (prop in metadata.frontmatter) {
-        let value = metadata.frontmatter[prop];
-        return _is_string(value) ? value : null;
+    if ((metadata == null ? void 0 : metadata.frontmatter) && prop in metadata.frontmatter) {
+      let value = metadata.frontmatter[prop];
+      if (typeof value === "string")
+        return value;
+      if (Array.isArray(value) && value.length > 0) {
+        let first = value[0];
+        if (typeof first === "string")
+          return first;
       }
+      return null;
     }
+    return null;
   }
   // can we get it from Note class?
   get_note_title(file) {
