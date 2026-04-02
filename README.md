@@ -22,13 +22,12 @@ Allows you to quickly find notes by navigating the knowledge base like a book ta
 - Front Matter Title plugin support
 - Database optimization
 
-## Example
-
-https://github.com/user-attachments/assets/a4990b31-c8ea-48c8-815a-98521d81fc7d
-
 ## Documentation
 
 The current documentation is available in the [docs](./docs/index.md) folder.
 
 The old documentation is located on [GitBook](https://virtfolder.gitbook.io/index).
 
+## Example
+
+https://github.com/user-attachments/assets/a4990b31-c8ea-48c8-815a-98521d81fc7d
