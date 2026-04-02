@@ -38,7 +38,7 @@ The plugin displays this hierarchy as a collapsible tree in the left sidebar, wh
 - **Obsidian version**: 0.15.0 or higher
 - **Platforms**: Desktop and mobile
 - **Optional integrations**:
-  - [Unique Note Creator](https://github.com/alanhamlett/obsidian-unique-note-creator-plugin) (zk-prefixer) — auto-generated note names
+  - Unique Note Creator — auto-generated note names
   - [Front Matter Title](https://github.com/snezhig/obsidian-front-matter-title) — display custom titles from frontmatter
 
 ## Bugs and Suggestions
