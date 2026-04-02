@@ -273,9 +273,9 @@ export default class VirtFolderPlugin extends Plugin
 		}
 	};
 	
-	onCreateFile = (file: TAbstractFile) => 
+	onCreateFile = (file: TAbstractFile) =>
 	{
-		if(file instanceof TFile)
+		if(file instanceof TFile && file.extension === 'md')
 		{
 			this.data.onCreate(file);
 			this.update_data();
@@ -285,7 +285,7 @@ export default class VirtFolderPlugin extends Plugin
 	onDeleteFile = (file: TAbstractFile) =>
 	{
 		// file can be TFolder or TFile
-		if(file instanceof TFile)
+		if(file instanceof TFile && file.extension === 'md')
 		{
 			this.data.onDelete(file);
 			this.update_data();
@@ -294,7 +294,7 @@ export default class VirtFolderPlugin extends Plugin
 	
 	onRenameFile = (file: TAbstractFile, oldPath: string) =>
 	{
-		if(file instanceof TFile)
+		if(file instanceof TFile && file.extension === 'md')
 		{
 			this.data.onRename(file, oldPath);
 			this.update_data();

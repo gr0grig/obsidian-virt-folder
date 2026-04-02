@@ -6097,19 +6097,19 @@ var VirtFolderPlugin = class extends import_obsidian9.Plugin {
       }
     };
     this.onCreateFile = (file) => {
-      if (file instanceof import_obsidian9.TFile) {
+      if (file instanceof import_obsidian9.TFile && file.extension === "md") {
         this.data.onCreate(file);
         this.update_data();
       }
     };
     this.onDeleteFile = (file) => {
-      if (file instanceof import_obsidian9.TFile) {
+      if (file instanceof import_obsidian9.TFile && file.extension === "md") {
         this.data.onDelete(file);
         this.update_data();
       }
     };
     this.onRenameFile = (file, oldPath) => {
-      if (file instanceof import_obsidian9.TFile) {
+      if (file instanceof import_obsidian9.TFile && file.extension === "md") {
         this.data.onRename(file, oldPath);
         this.update_data();
       }
