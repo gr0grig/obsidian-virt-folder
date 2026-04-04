@@ -7,7 +7,7 @@
 	export function focusTo(pathNotes: string[])
 	{
 		let first:string|undefined = pathNotes.shift();
-		if(!first) return;
+		if(!first || !(first in children)) return;
 		children[first].focusNotes(pathNotes);
 	}
 

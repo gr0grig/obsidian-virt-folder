@@ -5854,7 +5854,7 @@ function instance2($$self, $$props, $$invalidate) {
   const children2 = {};
   function focusTo(pathNotes) {
     let first = pathNotes.shift();
-    if (!first)
+    if (!first || !(first in children2))
       return;
     children2[first].focusNotes(pathNotes);
   }
