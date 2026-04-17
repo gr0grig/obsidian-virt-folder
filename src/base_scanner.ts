@@ -1,7 +1,7 @@
 import { App, TFile, getAllTags } from 'obsidian';
 import { OneNote } from 'onenote';
 import  VirtFolderPlugin  from 'main';
-import { SortTypes } from 'settings';
+import { SortTypes, TagHighlightConfig } from 'settings';
 
 function _is_string(value:any)
 {
@@ -14,6 +14,7 @@ class ScanSettings
 	ignored_tags: string[] = [];
 	title: string = '';
 	icon_prop: string = 'vf_icon';
+	tag_highlights: TagHighlightConfig[] = [];
     prop_regexp?:RegExp = undefined;
 
     set_filter(filter: string[])
@@ -34,6 +35,11 @@ class ScanSettings
     set_icon_prop(prop: string)
     {
         this.icon_prop = prop;
+    }
+
+    set_tag_highlights(highlights: TagHighlightConfig[])
+    {
+        this.tag_highlights = highlights;
     }
 
     set_prop(prop: string)
@@ -236,6 +242,26 @@ export class BaseScanner
             {
                 let value = metadata.frontmatter[this.settings.icon_prop];
                 if(_is_string(value)) this.note_list[file_id].icon = value;
+            }
+        }
+
+        this._apply_highlight(metadata, file_id);
+    }
+
+    _apply_highlight(metadata: any, file_id: string)
+    {
+        if(this.settings.tag_highlights.length === 0) return;
+
+        let tags = getAllTags(metadata);
+        if(!tags) return;
+
+        for(let hl of this.settings.tag_highlights)
+        {
+            if(tags.includes(hl.tag))
+            {
+                this.note_list[file_id].highlight_color = hl.color;
+                this.note_list[file_id].highlight_opacity = hl.opacity;
+                return;
             }
         }
     }
@@ -707,6 +733,20 @@ export class BaseScanner
         return _is_string(value) ? value : '';
     }
 
+    _read_expected_highlight(file: TFile): { color: string, opacity: number }
+    {
+        if(this.settings.tag_highlights.length === 0) return { color: '', opacity: 0 };
+        let metadata = this.app.metadataCache.getFileCache(file);
+        if(!metadata) return { color: '', opacity: 0 };
+        let tags = getAllTags(metadata);
+        if(!tags) return { color: '', opacity: 0 };
+        for(let hl of this.settings.tag_highlights)
+        {
+            if(tags.includes(hl.tag)) return { color: hl.color, opacity: hl.opacity };
+        }
+        return { color: '', opacity: 0 };
+    }
+
     _arrays_equal(a: string[], b: string[]): boolean
     {
         if(a.length !== b.length) return false;
@@ -741,11 +781,14 @@ export class BaseScanner
         let expected_pinned = this._read_expected_pinned(file);
         let expected_title = this.get_note_title(file);
         let expected_icon = this._read_expected_icon(file);
+        let expected_highlight = this._read_expected_highlight(file);
 
         if(note.mtime == file.stat.mtime &&
            note.title == expected_title &&
            note.is_pinned == expected_pinned &&
            note.icon == expected_icon &&
+           note.highlight_color == expected_highlight.color &&
+           note.highlight_opacity == expected_highlight.opacity &&
            this._arrays_equal(note.parents, expected_parents))
         {
             return;
@@ -758,6 +801,8 @@ export class BaseScanner
         note.title = expected_title;
         note.is_pinned = expected_pinned;
         note.icon = expected_icon;
+        note.highlight_color = expected_highlight.color;
+        note.highlight_opacity = expected_highlight.opacity;
 
         for(let parent_id of expected_parents)
         {

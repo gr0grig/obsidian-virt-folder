@@ -10,6 +10,8 @@ export class OneNote
 	children: string[] = [];
 	is_pinned: boolean = false;
 	icon: string = '';
+	highlight_color: string = '';
+	highlight_opacity: number = 0;
 
     
     constructor(id: string, mtime: number, ctime: number, name:string, title:string)
@@ -26,6 +28,8 @@ export class OneNote
         this.parents = [];
         this.children = [];
         this.is_pinned = false;
+        this.highlight_color = '';
+        this.highlight_opacity = 0;
         this.mtime = 0;
         this.utime = 0;
     }

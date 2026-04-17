@@ -1146,6 +1146,8 @@ var OneNote = class {
     this.children = [];
     this.is_pinned = false;
     this.icon = "";
+    this.highlight_color = "";
+    this.highlight_opacity = 0;
     this.id = id;
     this.mtime = mtime;
     this.name = name;
@@ -1156,6 +1158,8 @@ var OneNote = class {
     this.parents = [];
     this.children = [];
     this.is_pinned = false;
+    this.highlight_color = "";
+    this.highlight_opacity = 0;
     this.mtime = 0;
     this.utime = 0;
   }
@@ -1194,7 +1198,8 @@ var DEFAULT_SETTINGS = {
   UseWikiLinks: true,
   confirmDelete: true,
   autoReveal: false,
-  firstRun: true
+  firstRun: true,
+  tagHighlights: []
 };
 var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin2) {
@@ -1208,6 +1213,7 @@ var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
     this.update_prop_name(this.plugin.settings.propertyName);
     this.update_title(this.plugin.settings.titleProp);
     this.update_icon_prop(this.plugin.settings.iconProp);
+    this.update_tag_highlights();
   }
   display() {
     let { containerEl } = this;
@@ -1332,6 +1338,60 @@ var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
+    containerEl.createEl("h3", { text: "Tag highlights" });
+    new import_obsidian.Setting(containerEl).setName("Add tag highlight").setDesc("Highlight notes in the tree based on their tags").addText((text2) => {
+      text2.setPlaceholder("#tag");
+      text2.inputEl.addEventListener("keydown", async (e) => {
+        if (e.key !== "Enter")
+          return;
+        let value = text2.getValue().trim();
+        if (!value)
+          return;
+        if (!value.startsWith("#"))
+          value = "#" + value;
+        if (this.plugin.settings.tagHighlights.some((h) => h.tag === value)) {
+          text2.inputEl.style.borderColor = this.get_css_var("--background-modifier-error");
+          return;
+        }
+        this.plugin.settings.tagHighlights.push({ tag: value, color: "#7f6df2", opacity: 0.3 });
+        await this.plugin.saveSettings();
+        this.update_tag_highlights();
+        this.update_note_list();
+        this.display();
+      });
+    });
+    for (let i = 0; i < this.plugin.settings.tagHighlights.length; i++) {
+      let hl = this.plugin.settings.tagHighlights[i];
+      new import_obsidian.Setting(containerEl).setName(hl.tag).addColorPicker((cp) => {
+        cp.setValue(hl.color);
+        cp.onChange(async (value) => {
+          hl.color = value;
+          await this.plugin.saveSettings();
+          this.update_tag_highlights();
+          this.update_note_list();
+        });
+      }).addSlider((sl) => {
+        sl.setLimits(5, 100, 5);
+        sl.setValue(hl.opacity * 100);
+        sl.setDynamicTooltip();
+        sl.onChange(async (value) => {
+          hl.opacity = value / 100;
+          await this.plugin.saveSettings();
+          this.update_tag_highlights();
+          this.update_note_list();
+        });
+      }).addExtraButton((btn) => {
+        btn.setIcon("trash");
+        btn.setTooltip("Remove");
+        btn.onClick(async () => {
+          this.plugin.settings.tagHighlights.splice(i, 1);
+          await this.plugin.saveSettings();
+          this.update_tag_highlights();
+          this.update_note_list();
+          this.display();
+        });
+      });
+    }
   }
   update_counter() {
     let count = this.plugin.base.get_filtered_count();
@@ -1377,6 +1437,9 @@ var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
       this.update_note_list();
     }
   }
+  update_tag_highlights() {
+    this.plugin.base.settings.set_tag_highlights(this.plugin.settings.tagHighlights);
+  }
   get_css_var(variable) {
     let el = document.querySelector("body");
     if (!el)
@@ -1398,6 +1461,7 @@ var ScanSettings = class {
     this.ignored_tags = [];
     this.title = "";
     this.icon_prop = "vf_icon";
+    this.tag_highlights = [];
     this.prop_regexp = void 0;
   }
   set_filter(filter) {
@@ -1411,6 +1475,9 @@ var ScanSettings = class {
   }
   set_icon_prop(prop) {
     this.icon_prop = prop;
+  }
+  set_tag_highlights(highlights) {
+    this.tag_highlights = highlights;
   }
   set_prop(prop) {
     let regexp_str = `^${prop}(\\.\\d+){0,1}$`;
@@ -1564,6 +1631,21 @@ var BaseScanner = class {
         let value = metadata.frontmatter[this.settings.icon_prop];
         if (_is_string(value))
           this.note_list[file_id].icon = value;
+      }
+    }
+    this._apply_highlight(metadata, file_id);
+  }
+  _apply_highlight(metadata, file_id) {
+    if (this.settings.tag_highlights.length === 0)
+      return;
+    let tags = (0, import_obsidian2.getAllTags)(metadata);
+    if (!tags)
+      return;
+    for (let hl of this.settings.tag_highlights) {
+      if (tags.includes(hl.tag)) {
+        this.note_list[file_id].highlight_color = hl.color;
+        this.note_list[file_id].highlight_opacity = hl.opacity;
+        return;
       }
     }
   }
@@ -1922,6 +2004,21 @@ var BaseScanner = class {
     let value = metadata.frontmatter[this.settings.icon_prop];
     return _is_string(value) ? value : "";
   }
+  _read_expected_highlight(file) {
+    if (this.settings.tag_highlights.length === 0)
+      return { color: "", opacity: 0 };
+    let metadata = this.app.metadataCache.getFileCache(file);
+    if (!metadata)
+      return { color: "", opacity: 0 };
+    let tags = (0, import_obsidian2.getAllTags)(metadata);
+    if (!tags)
+      return { color: "", opacity: 0 };
+    for (let hl of this.settings.tag_highlights) {
+      if (tags.includes(hl.tag))
+        return { color: hl.color, opacity: hl.opacity };
+    }
+    return { color: "", opacity: 0 };
+  }
   _arrays_equal(a, b) {
     if (a.length !== b.length)
       return false;
@@ -1948,7 +2045,8 @@ var BaseScanner = class {
     let expected_pinned = this._read_expected_pinned(file);
     let expected_title = this.get_note_title(file);
     let expected_icon = this._read_expected_icon(file);
-    if (note.mtime == file.stat.mtime && note.title == expected_title && note.is_pinned == expected_pinned && note.icon == expected_icon && this._arrays_equal(note.parents, expected_parents)) {
+    let expected_highlight = this._read_expected_highlight(file);
+    if (note.mtime == file.stat.mtime && note.title == expected_title && note.is_pinned == expected_pinned && note.icon == expected_icon && note.highlight_color == expected_highlight.color && note.highlight_opacity == expected_highlight.opacity && this._arrays_equal(note.parents, expected_parents)) {
       return;
     }
     let old_utime = note.utime;
@@ -1957,6 +2055,8 @@ var BaseScanner = class {
     note.title = expected_title;
     note.is_pinned = expected_pinned;
     note.icon = expected_icon;
+    note.highlight_color = expected_highlight.color;
+    note.highlight_opacity = expected_highlight.opacity;
     for (let parent_id of expected_parents) {
       note.parents.push(parent_id);
       this.note_list[parent_id].children.push(file_id);
@@ -4759,9 +4859,9 @@ var VF_IconPickerModal = class extends import_obsidian5.Modal {
 // components/Note.svelte
 function get_each_context(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[36] = list[i];
-  child_ctx[37] = list;
-  child_ctx[38] = i;
+  child_ctx[39] = list[i];
+  child_ctx[40] = list;
+  child_ctx[41] = i;
   return child_ctx;
 }
 function create_if_block_4(ctx) {
@@ -4777,7 +4877,7 @@ function create_if_block_4(ctx) {
         div,
         "is-collapsed",
         /*isCollapsed*/
-        ctx[5]
+        ctx[6]
       );
     },
     m(target, anchor) {
@@ -4786,22 +4886,22 @@ function create_if_block_4(ctx) {
         dispose = [
           listen(div, "click", stop_propagation(
             /*click_handler*/
-            ctx[27]
+            ctx[30]
           )),
           action_destroyer(collapsedIcon_action = /*collapsedIcon*/
-          ctx[13].call(null, div))
+          ctx[14].call(null, div))
         ];
         mounted = true;
       }
     },
     p(ctx2, dirty) {
       if (dirty[0] & /*isCollapsed*/
-      32) {
+      64) {
         toggle_class(
           div,
           "is-collapsed",
           /*isCollapsed*/
-          ctx2[5]
+          ctx2[6]
         );
       }
     },
@@ -4822,7 +4922,7 @@ function create_if_block_3(ctx) {
       span = element("span");
       t = text(
         /*noteIcon*/
-        ctx[3]
+        ctx[4]
       );
       attr(span, "class", "vf-note-icon");
     },
@@ -4832,11 +4932,11 @@ function create_if_block_3(ctx) {
     },
     p(ctx2, dirty) {
       if (dirty[0] & /*noteIcon*/
-      8)
+      16)
         set_data(
           t,
           /*noteIcon*/
-          ctx2[3]
+          ctx2[4]
         );
     },
     d(detaching) {
@@ -4910,7 +5010,7 @@ function create_if_block(ctx) {
   );
   const get_key = (ctx2) => (
     /*child*/
-    ctx2[36]
+    ctx2[39]
   );
   for (let i = 0; i < each_value.length; i += 1) {
     let child_ctx = get_each_context(ctx, each_value, i);
@@ -4939,13 +5039,13 @@ function create_if_block(ctx) {
             div,
             "introstart",
             /*expandTransitionStart*/
-            ctx[14]
+            ctx[15]
           ),
           listen(
             div,
             "introend",
             /*introend_handler*/
-            ctx[30]
+            ctx[33]
           )
         ];
         mounted = true;
@@ -4953,7 +5053,7 @@ function create_if_block(ctx) {
     },
     p(ctx2, dirty) {
       if (dirty[0] & /*childList, build_path, children*/
-      34048) {
+      66816) {
         each_value = ensure_array_like(
           /*childList*/
           ctx2[8]
@@ -5010,27 +5110,27 @@ function create_each_block(key_1, ctx) {
   let note_1;
   let child = (
     /*child*/
-    ctx[36]
+    ctx[39]
   );
   let current;
   const assign_note_1 = () => (
     /*note_1_binding*/
-    ctx[29](note_1, child)
+    ctx[32](note_1, child)
   );
   const unassign_note_1 = () => (
     /*note_1_binding*/
-    ctx[29](null, child)
+    ctx[32](null, child)
   );
   let note_1_props = {
     id: (
       /*child*/
-      ctx[36]
+      ctx[39]
     ),
     node_path: (
       /*build_path*/
-      ctx[15](
+      ctx[16](
         /*child*/
-        ctx[36]
+        ctx[39]
       )
     )
   };
@@ -5052,23 +5152,23 @@ function create_each_block(key_1, ctx) {
     p(new_ctx, dirty) {
       ctx = new_ctx;
       if (child !== /*child*/
-      ctx[36]) {
+      ctx[39]) {
         unassign_note_1();
         child = /*child*/
-        ctx[36];
+        ctx[39];
         assign_note_1();
       }
       const note_1_changes = {};
       if (dirty[0] & /*childList*/
       256)
         note_1_changes.id = /*child*/
-        ctx[36];
+        ctx[39];
       if (dirty[0] & /*childList*/
       256)
         note_1_changes.node_path = /*build_path*/
-        ctx[15](
+        ctx[16](
           /*child*/
-          ctx[36]
+          ctx[39]
         );
       note_1.$set(note_1_changes);
     },
@@ -5112,11 +5212,11 @@ function create_fragment(ctx) {
   );
   let if_block1 = (
     /*noteIcon*/
-    ctx[3] && create_if_block_3(ctx)
+    ctx[4] && create_if_block_3(ctx)
   );
   let if_block2 = (
     /*isPinned*/
-    ctx[4] && create_if_block_2(ctx)
+    ctx[5] && create_if_block_2(ctx)
   );
   let if_block3 = (
     /*childCounter*/
@@ -5125,7 +5225,7 @@ function create_fragment(ctx) {
   let if_block4 = (
     /*childCounter*/
     ctx[7] > 0 && !/*isCollapsed*/
-    ctx[5] && create_if_block(ctx)
+    ctx[6] && create_if_block(ctx)
   );
   return {
     c() {
@@ -5140,7 +5240,7 @@ function create_fragment(ctx) {
       t1 = space();
       t2 = text(
         /*title*/
-        ctx[2]
+        ctx[3]
       );
       t3 = space();
       if (if_block2)
@@ -5153,9 +5253,21 @@ function create_fragment(ctx) {
         if_block4.c();
       attr(div0, "class", "tree-item-inner");
       attr(div1, "class", div1_class_value = "tree-item-self is-clickable mod-collapsible " + /*IsOpened*/
-      (ctx[6] ? "vf-current-note" : ""));
+      (ctx[2] ? "vf-current-note" : ""));
+      attr(
+        div1,
+        "style",
+        /*tagHighlightStyle*/
+        ctx[13]
+      );
       attr(div1, "draggable", div1_draggable_value = /*type*/
       ctx[1] === "sub_note");
+      toggle_class(
+        div1,
+        "vf-tag-highlight",
+        /*tagHighlightStyle*/
+        ctx[13] !== ""
+      );
       toggle_class(
         div1,
         "vf-drop-target",
@@ -5184,7 +5296,7 @@ function create_fragment(ctx) {
       append(div2, t5);
       if (if_block4)
         if_block4.m(div2, null);
-      ctx[31](div2);
+      ctx[34](div2);
       current = true;
       if (!mounted) {
         dispose = [
@@ -5192,35 +5304,35 @@ function create_fragment(ctx) {
             div1,
             "dragstart",
             /*handleDragStart*/
-            ctx[17]
+            ctx[18]
           ),
           listen(div1, "dragover", prevent_default(
             /*handleDragOver*/
-            ctx[18]
+            ctx[19]
           )),
           listen(
             div1,
             "dragleave",
             /*handleDragLeave*/
-            ctx[19]
+            ctx[20]
           ),
           listen(
             div1,
             "drop",
             /*handleDrop*/
-            ctx[20]
+            ctx[21]
           ),
           listen(
             div1,
             "contextmenu",
             /*handleContextMenu*/
-            ctx[21]
+            ctx[22]
           ),
           listen(
             div1,
             "click",
             /*click_handler_1*/
-            ctx[28]
+            ctx[31]
           )
         ];
         mounted = true;
@@ -5244,7 +5356,7 @@ function create_fragment(ctx) {
       }
       if (
         /*noteIcon*/
-        ctx2[3]
+        ctx2[4]
       ) {
         if (if_block1) {
           if_block1.p(ctx2, dirty);
@@ -5258,15 +5370,15 @@ function create_fragment(ctx) {
         if_block1 = null;
       }
       if (!current || dirty[0] & /*title*/
-      4)
+      8)
         set_data(
           t2,
           /*title*/
-          ctx2[2]
+          ctx2[3]
         );
       if (
         /*isPinned*/
-        ctx2[4]
+        ctx2[5]
       ) {
         if (if_block2) {
         } else {
@@ -5294,17 +5406,35 @@ function create_fragment(ctx) {
         if_block3 = null;
       }
       if (!current || dirty[0] & /*IsOpened*/
-      64 && div1_class_value !== (div1_class_value = "tree-item-self is-clickable mod-collapsible " + /*IsOpened*/
-      (ctx2[6] ? "vf-current-note" : ""))) {
+      4 && div1_class_value !== (div1_class_value = "tree-item-self is-clickable mod-collapsible " + /*IsOpened*/
+      (ctx2[2] ? "vf-current-note" : ""))) {
         attr(div1, "class", div1_class_value);
+      }
+      if (!current || dirty[0] & /*tagHighlightStyle*/
+      8192) {
+        attr(
+          div1,
+          "style",
+          /*tagHighlightStyle*/
+          ctx2[13]
+        );
       }
       if (!current || dirty[0] & /*type*/
       2 && div1_draggable_value !== (div1_draggable_value = /*type*/
       ctx2[1] === "sub_note")) {
         attr(div1, "draggable", div1_draggable_value);
       }
+      if (!current || dirty[0] & /*IsOpened, tagHighlightStyle*/
+      8196) {
+        toggle_class(
+          div1,
+          "vf-tag-highlight",
+          /*tagHighlightStyle*/
+          ctx2[13] !== ""
+        );
+      }
       if (!current || dirty[0] & /*IsOpened, isDragOver*/
-      4160) {
+      4100) {
         toggle_class(
           div1,
           "vf-drop-target",
@@ -5315,12 +5445,12 @@ function create_fragment(ctx) {
       if (
         /*childCounter*/
         ctx2[7] > 0 && !/*isCollapsed*/
-        ctx2[5]
+        ctx2[6]
       ) {
         if (if_block4) {
           if_block4.p(ctx2, dirty);
           if (dirty[0] & /*childCounter, isCollapsed*/
-          160) {
+          192) {
             transition_in(if_block4, 1);
           }
         } else {
@@ -5361,17 +5491,18 @@ function create_fragment(ctx) {
         if_block3.d();
       if (if_block4)
         if_block4.d();
-      ctx[31](null);
+      ctx[34](null);
       mounted = false;
       run_all(dispose);
     }
   };
 }
 function instance($$self, $$props, $$invalidate) {
+  let tagHighlightStyle;
   let $data;
   let $active_id;
-  component_subscribe($$self, data, ($$value) => $$invalidate(25, $data = $$value));
-  component_subscribe($$self, active_id, ($$value) => $$invalidate(26, $active_id = $$value));
+  component_subscribe($$self, data, ($$value) => $$invalidate(28, $data = $$value));
+  component_subscribe($$self, active_id, ($$value) => $$invalidate(29, $active_id = $$value));
   let { id = "unknown-link-id" } = $$props;
   let { type = "sub_note" } = $$props;
   let { node_path = [] } = $$props;
@@ -5382,6 +5513,8 @@ function instance($$self, $$props, $$invalidate) {
   let isPinned = false;
   let isCollapsed = true;
   let IsOpened = false;
+  let highlightColor = "";
+  let highlightOpacity = 0;
   let childCounter = 0;
   let childList = [];
   let myElement;
@@ -5531,7 +5664,7 @@ function instance($$self, $$props, $$invalidate) {
     menu.showAtMouseEvent(event);
   }
   const focusNotes = (pathNotes) => __awaiter(void 0, void 0, void 0, function* () {
-    $$invalidate(5, isCollapsed = false);
+    $$invalidate(6, isCollapsed = false);
     yield tick();
     let next = pathNotes.shift();
     if (pathNotes.length === 0)
@@ -5547,7 +5680,7 @@ function instance($$self, $$props, $$invalidate) {
     }
   });
   const click_handler = () => {
-    $$invalidate(5, isCollapsed = !isCollapsed);
+    $$invalidate(6, isCollapsed = !isCollapsed);
   };
   const click_handler_1 = (event) => {
     if (event.shiftKey) {
@@ -5558,7 +5691,7 @@ function instance($$self, $$props, $$invalidate) {
       openNote(id, true);
       return;
     }
-    $$invalidate(5, isCollapsed = false);
+    $$invalidate(6, isCollapsed = false);
     openNote(id);
   };
   function note_1_binding($$value, child) {
@@ -5582,50 +5715,58 @@ function instance($$self, $$props, $$invalidate) {
     if ("type" in $$props2)
       $$invalidate(1, type = $$props2.type);
     if ("node_path" in $$props2)
-      $$invalidate(22, node_path = $$props2.node_path);
+      $$invalidate(23, node_path = $$props2.node_path);
   };
   $$self.$$.update = () => {
     if ($$self.$$.dirty[0] & /*id, $active_id, type, $data, note*/
-    117440515) {
+    838860803) {
       $: {
-        $$invalidate(6, IsOpened = id == $active_id);
+        $$invalidate(2, IsOpened = id == $active_id);
         if (type == "top_dir") {
-          $$invalidate(2, title = "ROOT");
+          $$invalidate(3, title = "ROOT");
           $$invalidate(7, childCounter = $data.top_list.length);
           $$invalidate(8, childList = $data.top_list);
         }
         if (type == "orphan_dir") {
-          $$invalidate(2, title = "Orphans");
+          $$invalidate(3, title = "Orphans");
           $$invalidate(7, childCounter = $data.orphans_list.length);
           $$invalidate(8, childList = $data.orphans_list);
         }
         if (type == "sub_note") {
-          $$invalidate(24, note = $data.note_list[id]);
+          $$invalidate(25, note = $data.note_list[id]);
           if (note) {
-            $$invalidate(2, title = note.title);
-            $$invalidate(3, noteIcon = note.icon || "");
-            $$invalidate(4, isPinned = note.is_pinned);
+            $$invalidate(3, title = note.title);
+            $$invalidate(4, noteIcon = note.icon || "");
+            $$invalidate(5, isPinned = note.is_pinned);
+            $$invalidate(26, highlightColor = note.highlight_color || "");
+            $$invalidate(27, highlightOpacity = note.highlight_opacity || 0);
             $$invalidate(7, childCounter = note.count_children());
             $$invalidate(8, childList = note.children);
           }
         }
       }
     }
+    if ($$self.$$.dirty[0] & /*highlightColor, highlightOpacity, IsOpened*/
+    201326596) {
+      $:
+        $$invalidate(13, tagHighlightStyle = highlightColor && highlightOpacity > 0 && !IsOpened ? `background-color: color-mix(in srgb, ${highlightColor} ${highlightOpacity * 100}%, transparent)` : "");
+    }
   };
   return [
     id,
     type,
+    IsOpened,
     title,
     noteIcon,
     isPinned,
     isCollapsed,
-    IsOpened,
     childCounter,
     childList,
     myElement,
     children2,
     expandTransitionEnd,
     isDragOver,
+    tagHighlightStyle,
     collapsedIcon,
     expandTransitionStart,
     build_path,
@@ -5638,6 +5779,8 @@ function instance($$self, $$props, $$invalidate) {
     node_path,
     focusNotes,
     note,
+    highlightColor,
+    highlightOpacity,
     $data,
     $active_id,
     click_handler,
@@ -5659,15 +5802,15 @@ var Note = class extends SvelteComponent {
       {
         id: 0,
         type: 1,
-        node_path: 22,
-        focusNotes: 23
+        node_path: 23,
+        focusNotes: 24
       },
       null,
       [-1, -1]
     );
   }
   get focusNotes() {
-    return this.$$.ctx[23];
+    return this.$$.ctx[24];
   }
 };
 var Note_default = Note;

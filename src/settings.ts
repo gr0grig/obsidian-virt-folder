@@ -9,6 +9,13 @@ export enum SortTypes
 	modification_time = "modification_time",
 };
 
+export interface TagHighlightConfig
+{
+	tag: string;
+	color: string;
+	opacity: number;
+}
+
 export interface VirtFolderSettings
 {
 	ignorePath: string;
@@ -23,6 +30,7 @@ export interface VirtFolderSettings
 	confirmDelete: boolean;
 	autoReveal: boolean;
 	firstRun: boolean;
+	tagHighlights: TagHighlightConfig[];
 }
 
 export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
@@ -39,6 +47,7 @@ export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
 	confirmDelete: true,
 	autoReveal: false,
 	firstRun: true,
+	tagHighlights: [],
 };
 
 export class VirtFolderSettingTab extends PluginSettingTab
@@ -59,6 +68,7 @@ export class VirtFolderSettingTab extends PluginSettingTab
 		this.update_prop_name(this.plugin.settings.propertyName);
 		this.update_title(this.plugin.settings.titleProp);
 		this.update_icon_prop(this.plugin.settings.iconProp);
+		this.update_tag_highlights();
 	}
 
 	display(): void
@@ -295,6 +305,81 @@ export class VirtFolderSettingTab extends PluginSettingTab
 			});
 		});
 
+
+		containerEl.createEl('h3', {text: 'Tag highlights'});
+
+		new Setting(containerEl)
+		.setName("Add tag highlight")
+		.setDesc("Highlight notes in the tree based on their tags")
+		.addText((text: TextComponent) =>
+		{
+			text.setPlaceholder('#tag');
+			text.inputEl.addEventListener('keydown', async (e: KeyboardEvent) =>
+			{
+				if(e.key !== 'Enter') return;
+				let value = text.getValue().trim();
+				if(!value) return;
+				if(!value.startsWith('#')) value = '#' + value;
+
+				if(this.plugin.settings.tagHighlights.some(h => h.tag === value))
+				{
+					text.inputEl.style.borderColor = this.get_css_var('--background-modifier-error');
+					return;
+				}
+
+				this.plugin.settings.tagHighlights.push({ tag: value, color: '#7f6df2', opacity: 0.3 });
+				await this.plugin.saveSettings();
+				this.update_tag_highlights();
+				this.update_note_list();
+				this.display();
+			});
+		});
+
+		for(let i = 0; i < this.plugin.settings.tagHighlights.length; i++)
+		{
+			let hl = this.plugin.settings.tagHighlights[i];
+
+			new Setting(containerEl)
+			.setName(hl.tag)
+			.addColorPicker((cp) =>
+			{
+				cp.setValue(hl.color);
+				cp.onChange(async (value) =>
+				{
+					hl.color = value;
+					await this.plugin.saveSettings();
+					this.update_tag_highlights();
+					this.update_note_list();
+				});
+			})
+			.addSlider((sl) =>
+			{
+				sl.setLimits(5, 100, 5);
+				sl.setValue(hl.opacity * 100);
+				sl.setDynamicTooltip();
+				sl.onChange(async (value) =>
+				{
+					hl.opacity = value / 100;
+					await this.plugin.saveSettings();
+					this.update_tag_highlights();
+					this.update_note_list();
+				});
+			})
+			.addExtraButton((btn) =>
+			{
+				btn.setIcon('trash');
+				btn.setTooltip('Remove');
+				btn.onClick(async () =>
+				{
+					this.plugin.settings.tagHighlights.splice(i, 1);
+					await this.plugin.saveSettings();
+					this.update_tag_highlights();
+					this.update_note_list();
+					this.display();
+				});
+			});
+		}
+
 	}
 
 	update_counter()
@@ -360,6 +445,11 @@ export class VirtFolderSettingTab extends PluginSettingTab
 			this.plugin.base.settings.set_icon_prop(value);
 			this.update_note_list();
 		}
+	}
+
+	update_tag_highlights()
+	{
+		this.plugin.base.settings.set_tag_highlights(this.plugin.settings.tagHighlights);
 	}
 
 	get_css_var(variable:string)

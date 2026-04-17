@@ -23,6 +23,8 @@
 	let isPinned = false;
 	let isCollapsed = true;
 	let IsOpened = false;
+	let highlightColor = '';
+	let highlightOpacity = 0;
 
     let childCounter = 0;
 	let childList: any[] = [];
@@ -56,11 +58,17 @@
 				title = note.title;
 				noteIcon = note.icon || '';
 				isPinned = note.is_pinned;
+				highlightColor = note.highlight_color || '';
+				highlightOpacity = note.highlight_opacity || 0;
 				childCounter = note.count_children();
 				childList = note.children;
 			}
 		}
 	}
+
+	$: tagHighlightStyle = (highlightColor && highlightOpacity > 0 && !IsOpened)
+		? `background-color: color-mix(in srgb, ${highlightColor} ${highlightOpacity * 100}%, transparent)`
+		: '';
 
 	const collapsedIcon: Action = function (node) {
 	    node.appendChild(getIcon("right-triangle")!);
@@ -293,7 +301,9 @@
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<div
 		class="tree-item-self is-clickable mod-collapsible {IsOpened ? 'vf-current-note' : ''}"
+		class:vf-tag-highlight={tagHighlightStyle !== ''}
 		class:vf-drop-target={isDragOver}
+		style={tagHighlightStyle}
 		draggable={type === 'sub_note'}
 		on:dragstart={handleDragStart}
 		on:dragover|preventDefault={handleDragOver}
