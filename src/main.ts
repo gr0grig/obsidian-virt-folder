@@ -398,7 +398,17 @@ export default class VirtFolderPlugin extends Plugin
 
 		if(note.parents.length > 0)
 		{
-			let parent = this.base.note_by_id(note.parents[0]);
+			let parentId = note.parents[0];
+
+			// Prefer the parent from the currently revealed path
+			let lastActive = this.base.last_active;
+			if(lastActive.length >= 2)
+			{
+				let lastParent = lastActive[lastActive.length - 2];
+				if(note.parents.includes(lastParent)) parentId = lastParent;
+			}
+
+			let parent = this.base.note_by_id(parentId);
 			if(!parent) return null;
 			return parent.children;
 		}

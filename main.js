@@ -1855,7 +1855,14 @@ var BaseScanner = class {
     let old_index = this._array_index(path_list, this.last_active);
     let path = void 0;
     if (old_index === void 0) {
-      path = this._get_min_path(path_list);
+      if (this.last_active.length >= 2) {
+        let lastParent = this.last_active[this.last_active.length - 2];
+        let sameParent = path_list.find((p) => p.length >= 2 && p[p.length - 2] === lastParent);
+        if (sameParent)
+          path = sameParent;
+      }
+      if (!path)
+        path = this._get_min_path(path_list);
     } else {
       let next_index = this._next_index(path_list.length, old_index);
       path = path_list[next_index];
@@ -6542,7 +6549,14 @@ var VirtFolderPlugin = class extends import_obsidian9.Plugin {
     if (!note)
       return null;
     if (note.parents.length > 0) {
-      let parent = this.base.note_by_id(note.parents[0]);
+      let parentId = note.parents[0];
+      let lastActive = this.base.last_active;
+      if (lastActive.length >= 2) {
+        let lastParent = lastActive[lastActive.length - 2];
+        if (note.parents.includes(lastParent))
+          parentId = lastParent;
+      }
+      let parent = this.base.note_by_id(parentId);
       if (!parent)
         return null;
       return parent.children;

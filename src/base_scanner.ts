@@ -547,7 +547,15 @@ export class BaseScanner
 
         if(old_index === undefined)
         {
-            path = this._get_min_path(path_list);
+            // Try to stay in the same parent branch
+            if(this.last_active.length >= 2)
+            {
+                let lastParent = this.last_active[this.last_active.length - 2];
+                let sameParent = path_list.find(p => p.length >= 2 && p[p.length - 2] === lastParent);
+                if(sameParent) path = sameParent;
+            }
+
+            if(!path) path = this._get_min_path(path_list);
         }
         else
         {
