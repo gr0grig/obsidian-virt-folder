@@ -216,6 +216,7 @@ export class BaseScanner
                 if(!link_file) continue;
 
                 let link_id = link_file.path;
+                if(link_id === file_id) continue;
                 if(!(link_id in this.note_list)) continue;
 
                 this.note_list[file_id].parents.push(link_id);
@@ -681,6 +682,7 @@ export class BaseScanner
             let link_file = this.app.metadataCache.getFirstLinkpathDest(link.link, '');
             if(!link_file) continue;
             let link_id = link_file.path;
+            if(link_id === file.path) continue;
             if(!(link_id in this.note_list)) continue;
             parents.push(link_id);
         }
