@@ -27,6 +27,7 @@ export interface VirtFolderSettings
 	sortTreeBy: SortTypes;
 	sortTreeRev: boolean;
 	UseWikiLinks: boolean;
+	folderAsString: boolean;
 	confirmDelete: boolean;
 	autoReveal: boolean;
 	firstRun: boolean;
@@ -44,6 +45,7 @@ export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
 	sortTreeBy: SortTypes.file_name,
 	sortTreeRev: false,
 	UseWikiLinks: true,
+	folderAsString: false,
 	confirmDelete: true,
 	autoReveal: false,
 	firstRun: true,
@@ -274,6 +276,20 @@ export class VirtFolderSettingTab extends PluginSettingTab
 				this.plugin.settings.UseWikiLinks = value;
 				await this.plugin.saveSettings();
 				this.update_note_list();
+			});
+		});
+
+
+		new Setting(containerEl)
+		.setName("Use string for single folder link")
+		.setDesc("Write the folder property as a string instead of a list when a note has only one parent")
+		.addToggle( (tg:ToggleComponent) =>
+		{
+			tg.setValue(this.plugin.settings.folderAsString);
+			tg.onChange(async (value) =>
+			{
+				this.plugin.settings.folderAsString = value;
+				await this.plugin.saveSettings();
 			});
 		});
 

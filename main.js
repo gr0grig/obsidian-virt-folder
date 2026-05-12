@@ -1196,6 +1196,7 @@ var DEFAULT_SETTINGS = {
   sortTreeBy: "file_name" /* file_name */,
   sortTreeRev: false,
   UseWikiLinks: true,
+  folderAsString: false,
   confirmDelete: true,
   autoReveal: false,
   firstRun: true,
@@ -1322,6 +1323,13 @@ var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
         this.plugin.settings.UseWikiLinks = value;
         await this.plugin.saveSettings();
         this.update_note_list();
+      });
+    });
+    new import_obsidian.Setting(containerEl).setName("Use string for single folder link").setDesc("Write the folder property as a string instead of a list when a note has only one parent").addToggle((tg) => {
+      tg.setValue(this.plugin.settings.folderAsString);
+      tg.onChange(async (value) => {
+        this.plugin.settings.folderAsString = value;
+        await this.plugin.saveSettings();
       });
     });
     new import_obsidian.Setting(containerEl).setName("Confirm before deleting").setDesc("Show confirmation dialog before deleting a note").addToggle((tg) => {
@@ -5698,7 +5706,7 @@ function instance($$self, $$props, $$invalidate) {
       openNote(id, true);
       return;
     }
-    $$invalidate(6, isCollapsed = false);
+    $$invalidate(6, isCollapsed = !isCollapsed);
     openNote(id);
   };
   function note_1_binding($$value, child) {
@@ -6076,6 +6084,20 @@ var YamlParser = class {
   showMessage(msg) {
     new import_obsidian8.Notice(msg);
   }
+  _ensure_array(front, prop) {
+    if (prop in front && front[prop] && !Array.isArray(front[prop])) {
+      front[prop] = [front[prop]];
+    }
+  }
+  _normalize_prop(front, prop) {
+    if (!this.plugin.settings.folderAsString)
+      return;
+    if (!(prop in front) || !front[prop])
+      return;
+    if (Array.isArray(front[prop]) && front[prop].length === 1) {
+      front[prop] = front[prop][0];
+    }
+  }
   _fm_add_link(front, selected, prop) {
     let file = this.app.vault.getFileByPath(selected);
     if (!file)
@@ -6085,6 +6107,7 @@ var YamlParser = class {
     if (!this.plugin.settings.UseWikiLinks) {
       formated_link = `[${link}](${link})`;
     }
+    this._ensure_array(front, prop);
     if (prop in front && front[prop]) {
       if (front[prop].contains(formated_link)) {
         this.showMessage(`${prop}'s link already exist`);
@@ -6094,6 +6117,7 @@ var YamlParser = class {
       front[prop] = [];
     }
     front[prop].push(formated_link);
+    this._normalize_prop(front, prop);
     this.showMessage(`Set ${prop}: ${link}`);
   }
   add_link(yamlProp, file_id) {
@@ -6118,6 +6142,7 @@ var YamlParser = class {
     if (!this.plugin.settings.UseWikiLinks) {
       formated_link = `[${link}](${link})`;
     }
+    this._ensure_array(front, prop);
     if (prop in front && front[prop]) {
       if (front[prop].contains(formated_link)) {
         this.showMessage(`${prop}'s link already exist`);
@@ -6129,9 +6154,11 @@ var YamlParser = class {
       }
       let i = front[prop].indexOf(old_link);
       front[prop][i] = formated_link;
+      this._normalize_prop(front, prop);
       this.showMessage(`Set ${prop}: ${link}`);
     } else {
       front[prop] = [formated_link];
+      this._normalize_prop(front, prop);
       this.showMessage(`Set ${prop}: ${link}`);
     }
   }
@@ -6145,7 +6172,9 @@ var YamlParser = class {
   }
   _fm_get_links(front, prop) {
     if (prop in front && front[prop]) {
-      return front[prop];
+      if (Array.isArray(front[prop]))
+        return front[prop];
+      return [front[prop]];
     } else {
       return [];
     }
@@ -6159,9 +6188,11 @@ var YamlParser = class {
     });
   }
   _fm_remove_link(front, prop, old_link) {
+    this._ensure_array(front, prop);
     if (prop in front && front[prop]) {
       if (front[prop].contains(old_link)) {
         front[prop].remove(old_link);
+        this._normalize_prop(front, prop);
         this.showMessage(`${prop}'s link removed`);
       } else {
         this.showMessage(`${prop}'s link not exist`);
@@ -6186,7 +6217,8 @@ var YamlParser = class {
   _find_link_for_path(front, prop, targetPath) {
     if (!(prop in front) || !front[prop])
       return null;
-    for (let rawLink of front[prop]) {
+    let links = Array.isArray(front[prop]) ? front[prop] : [front[prop]];
+    for (let rawLink of links) {
       let linkBase = this._extract_link_base(rawLink);
       if (!linkBase)
         continue;
@@ -6220,9 +6252,7 @@ var YamlParser = class {
   }
   move_to_folder(noteFile, yamlProp, oldParentPath, newParentPath) {
     this.app.fileManager.processFrontMatter(noteFile, (fm) => {
-      if (!Array.isArray(fm[yamlProp])) {
-        fm[yamlProp] = [fm[yamlProp]];
-      }
+      this._ensure_array(fm, yamlProp);
       if (oldParentPath) {
         let rawLink = this._find_link_for_path(fm, yamlProp, oldParentPath);
         if (rawLink) {
@@ -6232,6 +6262,7 @@ var YamlParser = class {
       if (newParentPath) {
         this._fm_add_link(fm, newParentPath, yamlProp);
       } else if (oldParentPath) {
+        this._normalize_prop(fm, yamlProp);
         this.showMessage(`${yamlProp}'s link removed`);
       }
     });

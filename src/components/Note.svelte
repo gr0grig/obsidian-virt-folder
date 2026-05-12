@@ -324,7 +324,7 @@
 				return;
 			}
 			
-			isCollapsed = false;
+			isCollapsed = !isCollapsed;
 			openNote(id);
 		}}
 	>

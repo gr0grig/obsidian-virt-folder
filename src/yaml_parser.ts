@@ -13,6 +13,24 @@ export class YamlParser
 		new Notice(msg);
 	}
 
+    _ensure_array(front: any, prop: string)
+    {
+        if (prop in front && front[prop] && !Array.isArray(front[prop]))
+        {
+            front[prop] = [front[prop]];
+        }
+    }
+
+    _normalize_prop(front: any, prop: string)
+    {
+        if (!this.plugin.settings.folderAsString) return;
+        if (!(prop in front) || !front[prop]) return;
+        if (Array.isArray(front[prop]) && front[prop].length === 1)
+        {
+            front[prop] = front[prop][0];
+        }
+    }
+
     _fm_add_link(front:any, selected: string, prop: string)
     {
         let file = this.app.vault.getFileByPath(selected);
@@ -27,9 +45,10 @@ export class YamlParser
         }
         
         // add link to Folders
+        this._ensure_array(front, prop);
+
         if (prop in front && front[prop])
         {
-            // check wiki and md ?
             if(front[prop].contains(formated_link))
             {
                 this.showMessage(`${prop}'s link already exist`);
@@ -40,8 +59,9 @@ export class YamlParser
         {
             front[prop] = [];
         }
-        
+
         front[prop].push(formated_link);
+        this._normalize_prop(front, prop);
         this.showMessage(`Set ${prop}: ${link}`);
     }
 
@@ -61,15 +81,17 @@ export class YamlParser
     {
         let file = this.app.vault.getFileByPath(selected);
         if(!file) return;
-    
+
         let link = this.app.metadataCache.fileToLinktext(file, '');
         let formated_link = `[[${link}]]`;
-    
+
         if(!this.plugin.settings.UseWikiLinks)
         {
             formated_link = `[${link}](${link})`;
         }
-        
+
+        this._ensure_array(front, prop);
+
         if (prop in front && front[prop])
         {
             if(front[prop].contains(formated_link))
@@ -86,11 +108,13 @@ export class YamlParser
 
             let i = front[prop].indexOf(old_link);
             front[prop][i] = formated_link;
+            this._normalize_prop(front, prop);
             this.showMessage(`Set ${prop}: ${link}`);
         }
         else
         {
             front[prop] = [formated_link];
+            this._normalize_prop(front, prop);
             this.showMessage(`Set ${prop}: ${link}`);
         }
     }
@@ -106,7 +130,8 @@ export class YamlParser
     {
         if (prop in front && front[prop])
         {
-            return front[prop]
+            if (Array.isArray(front[prop])) return front[prop];
+            return [front[prop]];
         }
         else
         {
@@ -123,11 +148,14 @@ export class YamlParser
 
     _fm_remove_link(front:any, prop: string, old_link:string)
     {
+        this._ensure_array(front, prop);
+
         if (prop in front && front[prop])
         {
             if (front[prop].contains(old_link))
             {
                 front[prop].remove(old_link);
+                this._normalize_prop(front, prop);
                 this.showMessage(`${prop}'s link removed`);
             }
             else
@@ -156,7 +184,8 @@ export class YamlParser
     {
         if(!(prop in front) || !front[prop]) return null;
 
-        for(let rawLink of front[prop])
+        let links = Array.isArray(front[prop]) ? front[prop] : [front[prop]];
+        for(let rawLink of links)
         {
             let linkBase = this._extract_link_base(rawLink);
             if(!linkBase) continue;
@@ -202,9 +231,7 @@ export class YamlParser
     {
         this.app.fileManager.processFrontMatter(noteFile, (fm) =>
         {
-            if (!Array.isArray(fm[yamlProp])) {
-                fm[yamlProp] = [fm[yamlProp]];
-            }
+            this._ensure_array(fm, yamlProp);
 
             if(oldParentPath)
             {
@@ -221,6 +248,7 @@ export class YamlParser
             }
             else if(oldParentPath)
             {
+                this._normalize_prop(fm, yamlProp);
                 this.showMessage(`${yamlProp}'s link removed`);
             }
         });
