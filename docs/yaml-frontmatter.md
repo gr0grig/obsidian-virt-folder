@@ -38,7 +38,7 @@ Folders:
 
 ### Single vs Array Values
 
-The property value can be either an array or a single string. The plugin normalizes single strings to arrays automatically when performing operations:
+The property value can be either an array or a single string:
 
 ```yaml
 # Both are valid:
@@ -47,6 +47,12 @@ Folders:
 
 Folders: "[[Parent]]"
 ```
+
+By default, the plugin always writes list format. If you prefer string format for notes with a single parent (e.g., for simpler Dataview queries), enable **Use string for single folder link** in [Settings](settings.md#use-string-for-single-folder-link). The plugin handles both formats correctly when reading, regardless of this setting.
+
+### Self-Reference Protection
+
+If a note references itself as its own parent (e.g., `NoteA` has `Folders: "[[NoteA]]"`), the self-reference is silently ignored. The note will not disappear from the tree.
 
 ### Changing the Property Name
 

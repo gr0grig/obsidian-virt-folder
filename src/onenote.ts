@@ -12,6 +12,7 @@ export class OneNote
 	icon: string = '';
 	highlight_color: string = '';
 	highlight_opacity: number = 0;
+	metadata: Record<string, string> = {};
 
     
     constructor(id: string, mtime: number, ctime: number, name:string, title:string)
@@ -30,6 +31,7 @@ export class OneNote
         this.is_pinned = false;
         this.highlight_color = '';
         this.highlight_opacity = 0;
+        this.metadata = {};
         this.mtime = 0;
         this.utime = 0;
     }

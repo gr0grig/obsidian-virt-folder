@@ -143,9 +143,23 @@ Toggle pinning via:
 
 Pinned notes display a pin indicator (📌) next to their title.
 
+## Tag Highlighting
+
+Notes can be visually highlighted in the tree based on their tags. Configure tag-to-color mappings in [Settings > Tag Highlights](settings.md#tag-highlights).
+
+Each highlighted note gets a colored background in the tree. This is useful for workflows like spaced repetition (e.g., color-coding `#fleeting`, `#process`, `#review` notes) or distinguishing note types (`#atomic` vs `#literature`).
+
+The highlight is hidden on the currently active note so the active-note style takes precedence.
+
+## CSS Styling with Data Attributes
+
+When the **Expose frontmatter as data attributes** setting is enabled, you can style tree items using CSS based on any frontmatter property. See [Settings](settings.md#expose-frontmatter-as-data-attributes) for details and examples.
+
 ## Multi-Parent Notes
 
 A note can have multiple parents and will appear in multiple places in the tree. When you use **Reveal file**, the plugin cycles through all possible paths to the note on repeated calls.
+
+When navigating between siblings with the **Navigate to next/previous sibling** commands, the plugin stays within the currently revealed parent branch rather than switching to a different parent.
 
 ## Sorting
 

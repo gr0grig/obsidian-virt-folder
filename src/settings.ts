@@ -32,6 +32,7 @@ export interface VirtFolderSettings
 	autoReveal: boolean;
 	firstRun: boolean;
 	tagHighlights: TagHighlightConfig[];
+	exposeMetadata: boolean;
 }
 
 export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
@@ -50,6 +51,7 @@ export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
 	autoReveal: false,
 	firstRun: true,
 	tagHighlights: [],
+	exposeMetadata: false,
 };
 
 export class VirtFolderSettingTab extends PluginSettingTab
@@ -71,6 +73,7 @@ export class VirtFolderSettingTab extends PluginSettingTab
 		this.update_title(this.plugin.settings.titleProp);
 		this.update_icon_prop(this.plugin.settings.iconProp);
 		this.update_tag_highlights();
+		this.plugin.base.settings.set_expose_metadata(this.plugin.settings.exposeMetadata);
 	}
 
 	display(): void
@@ -318,6 +321,22 @@ export class VirtFolderSettingTab extends PluginSettingTab
 			{
 				this.plugin.settings.autoReveal = value;
 				await this.plugin.saveSettings();
+			});
+		});
+
+
+		new Setting(containerEl)
+		.setName("Expose frontmatter as data attributes")
+		.setDesc("Add note properties as data-* attributes on tree items for CSS styling")
+		.addToggle( (tg:ToggleComponent) =>
+		{
+			tg.setValue(this.plugin.settings.exposeMetadata);
+			tg.onChange(async (value) =>
+			{
+				this.plugin.settings.exposeMetadata = value;
+				await this.plugin.saveSettings();
+				this.plugin.base.settings.set_expose_metadata(value);
+				this.update_note_list();
 			});
 		});
 

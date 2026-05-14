@@ -110,6 +110,23 @@ Controls the link format written to frontmatter when adding parent links.
 
 This only affects newly written links. Existing links in either format are always readable.
 
+### Use string for single folder link
+
+When enabled, the folder property is written as a plain string instead of a YAML list when a note has only one parent.
+
+- **Default**: Off
+- **Off** (list format):
+  ```yaml
+  Folders:
+    - "[[Parent]]"
+  ```
+- **On** (string format):
+  ```yaml
+  Folders: "[[Parent]]"
+  ```
+
+When a second parent is added, the property automatically converts to a list. When a parent is removed leaving one, it converts back to a string. This is useful for Dataview/Base queries where you want a consistent string type.
+
 ## Behavior
 
 ### Confirm before deleting
@@ -127,3 +144,51 @@ Automatically expands the tree and scrolls to show the currently open file whene
 - **Default**: Off
 
 When enabled, opening any markdown file will trigger the tree to navigate to and highlight that file. This is equivalent to manually running the **Reveal file** command each time you open a note.
+
+### Expose frontmatter as data attributes
+
+When enabled, all frontmatter properties of each note are added as `data-*` HTML attributes on tree items. This allows styling notes with CSS snippets based on any frontmatter property.
+
+- **Default**: Off
+
+For example, a note with:
+
+```yaml
+dg-published: true
+status: draft
+tags: [important, review]
+```
+
+renders its tree item with attributes `data-dg-published="true"`, `data-status="draft"`, `data-tags="important,review"`.
+
+You can then create a CSS snippet in Obsidian to style matching items:
+
+```css
+.tree-item-self[data-dg-published="true"] {
+    border-left: 3px solid green;
+}
+.tree-item-self[data-status="draft"] {
+    opacity: 0.6;
+}
+```
+
+Property names are lowercased. Array values are joined with commas. Objects and the internal `position` key are excluded.
+
+## Tag Highlights
+
+Configure color-coded backgrounds for notes based on their tags. This provides quick visual cues when scanning the tree — similar to syntax highlighting when reading code.
+
+### Adding a tag highlight
+
+1. Type a tag name in the input field (e.g., `#important` or `important` — the `#` is added automatically)
+2. Press **Enter** to add it
+
+### Configuring highlights
+
+Each tag entry has:
+
+- **Color picker** — choose the highlight color
+- **Opacity slider** — set intensity from 5% to 100% (step: 5%)
+- **Delete button** (trash icon) — remove the highlight
+
+When a note has multiple matching tags, the first match in the list wins (order = priority). The highlight is hidden on the currently active note so the active-note indicator remains visible.

@@ -8,6 +8,16 @@ function _is_string(value:any)
     return typeof value === 'string';
 }
 
+function _frontmatter_to_string(value:any): string | null
+{
+    if(value === null || value === undefined) return null;
+    if(typeof value === 'string') return value;
+    if(typeof value === 'boolean' || typeof value === 'number') return String(value);
+    if(Array.isArray(value))
+        return value.filter(v => typeof v !== 'object').map(v => String(v)).join(',');
+    return null;
+}
+
 class ScanSettings
 {
 	filter: string[] = [];
@@ -15,6 +25,7 @@ class ScanSettings
 	title: string = '';
 	icon_prop: string = 'vf_icon';
 	tag_highlights: TagHighlightConfig[] = [];
+	expose_metadata: boolean = false;
     prop_regexp?:RegExp = undefined;
 
     set_filter(filter: string[])
@@ -40,6 +51,11 @@ class ScanSettings
     set_tag_highlights(highlights: TagHighlightConfig[])
     {
         this.tag_highlights = highlights;
+    }
+
+    set_expose_metadata(value: boolean)
+    {
+        this.expose_metadata = value;
     }
 
     set_prop(prop: string)
@@ -246,6 +262,7 @@ export class BaseScanner
         }
 
         this._apply_highlight(metadata, file_id);
+        this._extract_metadata(metadata, file_id);
     }
 
     _apply_highlight(metadata: any, file_id: string)
@@ -264,6 +281,24 @@ export class BaseScanner
                 return;
             }
         }
+    }
+
+    _extract_metadata(metadata: any, file_id: string)
+    {
+        if(!this.settings.expose_metadata) return;
+        if(!metadata?.frontmatter) return;
+
+        let result: Record<string, string> = {};
+
+        for(let key of Object.keys(metadata.frontmatter))
+        {
+            if(key === 'position') continue;
+            let str = _frontmatter_to_string(metadata.frontmatter[key]);
+            if(str === null) continue;
+            result[key.toLowerCase()] = str;
+        }
+
+        this.note_list[file_id].metadata = result;
     }
 
     build_links()
@@ -755,12 +790,40 @@ export class BaseScanner
         return { color: '', opacity: 0 };
     }
 
+    _read_expected_metadata(file: TFile): Record<string, string>
+    {
+        if(!this.settings.expose_metadata) return {};
+        let metadata = this.app.metadataCache.getFileCache(file);
+        if(!metadata?.frontmatter) return {};
+        let result: Record<string, string> = {};
+        for(let key of Object.keys(metadata.frontmatter))
+        {
+            if(key === 'position') continue;
+            let str = _frontmatter_to_string(metadata.frontmatter[key]);
+            if(str === null) continue;
+            result[key.toLowerCase()] = str;
+        }
+        return result;
+    }
+
     _arrays_equal(a: string[], b: string[]): boolean
     {
         if(a.length !== b.length) return false;
         for(let i = 0; i < a.length; i++)
         {
             if(a[i] !== b[i]) return false;
+        }
+        return true;
+    }
+
+    _records_equal(a: Record<string, string>, b: Record<string, string>): boolean
+    {
+        let keysA = Object.keys(a);
+        let keysB = Object.keys(b);
+        if(keysA.length !== keysB.length) return false;
+        for(let key of keysA)
+        {
+            if(a[key] !== b[key]) return false;
         }
         return true;
     }
@@ -790,6 +853,7 @@ export class BaseScanner
         let expected_title = this.get_note_title(file);
         let expected_icon = this._read_expected_icon(file);
         let expected_highlight = this._read_expected_highlight(file);
+        let expected_metadata = this._read_expected_metadata(file);
 
         if(note.mtime == file.stat.mtime &&
            note.title == expected_title &&
@@ -797,7 +861,8 @@ export class BaseScanner
            note.icon == expected_icon &&
            note.highlight_color == expected_highlight.color &&
            note.highlight_opacity == expected_highlight.opacity &&
-           this._arrays_equal(note.parents, expected_parents))
+           this._arrays_equal(note.parents, expected_parents) &&
+           this._records_equal(note.metadata, expected_metadata))
         {
             return;
         }
@@ -811,6 +876,7 @@ export class BaseScanner
         note.icon = expected_icon;
         note.highlight_color = expected_highlight.color;
         note.highlight_opacity = expected_highlight.opacity;
+        note.metadata = expected_metadata;
 
         for(let parent_id of expected_parents)
         {

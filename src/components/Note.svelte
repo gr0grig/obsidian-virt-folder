@@ -25,6 +25,7 @@
 	let IsOpened = false;
 	let highlightColor = '';
 	let highlightOpacity = 0;
+	let dataAttrs: Record<string, string> = {};
 
     let childCounter = 0;
 	let childList: any[] = [];
@@ -40,6 +41,7 @@
 			title = 'ROOT';
 			childCounter = $data.top_list.length;
 			childList = $data.top_list;
+			dataAttrs = {};
 		}
 
 		if(type == "orphan_dir")
@@ -47,6 +49,7 @@
 			title = 'Orphans';
 			childCounter = $data.orphans_list.length;
 			childList = $data.orphans_list;
+			dataAttrs = {};
 		}
 
 		if(type == "sub_note")
@@ -62,6 +65,13 @@
 				highlightOpacity = note.highlight_opacity || 0;
 				childCounter = note.count_children();
 				childList = note.children;
+
+				let attrs: Record<string, string> = {};
+				for(let key in note.metadata)
+				{
+					attrs['data-' + key] = note.metadata[key];
+				}
+				dataAttrs = attrs;
 			}
 		}
 	}
@@ -69,6 +79,17 @@
 	$: tagHighlightStyle = (highlightColor && highlightOpacity > 0 && !IsOpened)
 		? `background-color: color-mix(in srgb, ${highlightColor} ${highlightOpacity * 100}%, transparent)`
 		: '';
+
+	const applyDataAttrs: Action<HTMLElement, Record<string, string>> = function(node, attrs) {
+		let prev: string[] = [];
+		function update(newAttrs: Record<string, string>) {
+			for(let key of prev) node.removeAttribute(key);
+			prev = Object.keys(newAttrs);
+			for(let key of prev) node.setAttribute(key, newAttrs[key]);
+		}
+		update(attrs);
+		return { update };
+	};
 
 	const collapsedIcon: Action = function (node) {
 	    node.appendChild(getIcon("right-triangle")!);
@@ -304,6 +325,7 @@
 		class:vf-tag-highlight={tagHighlightStyle !== ''}
 		class:vf-drop-target={isDragOver}
 		style={tagHighlightStyle}
+		use:applyDataAttrs={dataAttrs}
 		draggable={type === 'sub_note'}
 		on:dragstart={handleDragStart}
 		on:dragover|preventDefault={handleDragOver}

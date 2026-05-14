@@ -18,6 +18,9 @@ Allows you to quickly find notes by navigating the knowledge base like a book ta
 - Creating and deleting notes via the right-click menu
 - Add files to virtual folders from the file explorer context menu
 - Emoji icon picker with categorized groups for notes
+- Tag-based note highlighting with configurable colors
+- Frontmatter as HTML data attributes for CSS styling
+- Optional string format for single-parent folder links
 - Create notes via Unique note creator
 - Front Matter Title plugin support
 - Database optimization
