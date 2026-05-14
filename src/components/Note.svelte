@@ -10,6 +10,7 @@
 	import { slide } from "svelte/transition";
 	import { getIcon, Notice, Menu } from "obsidian";
 	import { OneNote } from "onenote";
+	import { SortTypes } from "settings";
 	import { VF_IconPickerModal } from "../icon_picker_modal";
 	import type { Action } from "svelte/action";
 	import { tick } from "svelte";
@@ -143,7 +144,7 @@
         }
     }
 
-	let isDragOver = false;
+	let dropMode: 'none' | 'target' | 'before' | 'after' = 'none';
 
 	function getDragParentId(): string|null
 	{
@@ -152,12 +153,18 @@
 		return parentId;
 	}
 
+	function getRawParentId(): string|null
+	{
+		return node_path.length >= 2 ? node_path[node_path.length - 2] : null;
+	}
+
 	function handleDragStart(event: DragEvent)
 	{
 		if(type !== 'sub_note' || !event.dataTransfer) return;
 		event.dataTransfer.setData('text/plain', JSON.stringify({
 			id: id,
-			parentId: getDragParentId()
+			parentId: getDragParentId(),
+			rawParentId: getRawParentId()
 		}));
 		event.dataTransfer.effectAllowed = 'move';
 	}
@@ -166,18 +173,27 @@
 	{
 		event.preventDefault();
 		if(event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-		isDragOver = true;
+
+		if(plugin.settings.sortTreeBy === SortTypes.custom && type === 'sub_note')
+		{
+			let rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+			dropMode = event.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+		}
+		else
+		{
+			dropMode = 'target';
+		}
 	}
 
 	function handleDragLeave()
 	{
-		isDragOver = false;
+		dropMode = 'none';
 	}
 
 	function handleDrop(event: DragEvent)
 	{
 		event.preventDefault();
-		isDragOver = false;
+		dropMode = 'none';
 		if(!event.dataTransfer) return;
 
 		let dragData;
@@ -186,6 +202,7 @@
 
 		let draggedId: string = dragData.id;
 		let oldParentId: string|null = dragData.parentId;
+		let draggedRawParent: string|null = dragData.rawParentId;
 
 		if(draggedId === id || node_path.includes(draggedId))
 		{
@@ -193,6 +210,19 @@
 			return;
 		}
 
+		// Reorder: same parent, custom sort, sub_note target
+		let myRawParent = getRawParentId();
+		if(draggedRawParent && draggedRawParent === myRawParent &&
+		   plugin.settings.sortTreeBy === SortTypes.custom &&
+		   type === 'sub_note')
+		{
+			let rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+			let insertBefore = event.clientY < rect.top + rect.height / 2;
+			plugin.reorderNote(draggedId, id, draggedRawParent, insertBefore);
+			return;
+		}
+
+		// Move to different parent
 		let newParentId: string|null = null;
 		if(type === 'sub_note') newParentId = id;
 
@@ -323,7 +353,9 @@
 	<div
 		class="tree-item-self is-clickable mod-collapsible {IsOpened ? 'vf-current-note' : ''}"
 		class:vf-tag-highlight={tagHighlightStyle !== ''}
-		class:vf-drop-target={isDragOver}
+		class:vf-drop-target={dropMode === 'target'}
+		class:vf-drop-before={dropMode === 'before'}
+		class:vf-drop-after={dropMode === 'after'}
 		style={tagHighlightStyle}
 		use:applyDataAttrs={dataAttrs}
 		draggable={type === 'sub_note'}

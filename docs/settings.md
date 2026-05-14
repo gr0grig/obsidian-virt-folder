@@ -57,12 +57,13 @@ Controls the sort order of children within each parent node.
   - `note_title` — Alphabetical by display title
   - `creation_time` — By file creation date
   - `modification_time` — By last modification date
+  - `custom` — Manual order set via drag-and-drop reordering
 
 Pinned notes always appear first, regardless of sort mode.
 
 ### Reverse sort order
 
-Reverses the selected sort order.
+Reverses the selected sort order (does not apply to `custom` mode).
 
 - **Default**: Off
 

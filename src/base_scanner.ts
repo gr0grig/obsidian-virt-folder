@@ -346,18 +346,30 @@ export class BaseScanner
         }
     }
 
-    l_sort(links: string[])
+    l_sort(links: string[], parentId?: string)
 	{
         let links_copy: string[] = [...links];
         let sortBy: SortTypes = this.plugin.settings.sortTreeBy;
         let sortRev: boolean = this.plugin.settings.sortTreeRev;
 
-        if(sortBy == SortTypes.file_name)
+        if(sortBy == SortTypes.custom && parentId)
+        {
+            let stored = this.plugin.settings.customOrder[parentId];
+            if(stored)
+            {
+                let linkSet = new Set(links_copy);
+                let ordered = stored.filter(id => linkSet.has(id));
+                let orderedSet = new Set(ordered);
+                let remaining = links_copy.filter(id => !orderedSet.has(id));
+                remaining.sort();
+                links_copy = ordered.concat(remaining);
+            }
+        }
+        else if(sortBy == SortTypes.file_name || (sortBy == SortTypes.custom && !parentId))
         {
             links_copy.sort();
         }
-
-        if(sortBy == SortTypes.note_title)
+        else if(sortBy == SortTypes.note_title)
         {
             links_copy.sort(
                 (a,b) =>
@@ -370,22 +382,20 @@ export class BaseScanner
                 }
             );
         }
-
-        if(sortBy == SortTypes.creation_time)
+        else if(sortBy == SortTypes.creation_time)
         {
             links_copy.sort(
                 (a,b) => {return this.link_to_ctime(a) - this.link_to_ctime(b);}
             );
         }
-
-        if(sortBy == SortTypes.modification_time)
+        else if(sortBy == SortTypes.modification_time)
         {
             links_copy.sort(
                 (a,b) => {return this.link_to_mtime(a) - this.link_to_mtime(b);}
             );
         }
 
-        if(sortRev) links_copy.reverse();
+        if(sortBy != SortTypes.custom && sortRev) links_copy.reverse();
 
         // pinned notes go first, preserving sort order
         let pinned = links_copy.filter(id => this.note_list[id]?.is_pinned);
@@ -398,11 +408,11 @@ export class BaseScanner
         for (let id in this.note_list)
         {
             let note = this.note_list[id];
-            note.children = this.l_sort(note.children);
+            note.children = this.l_sort(note.children, id);
         }
 
-        this.orphans_list = this.l_sort(this.orphans_list);
-        this.top_list = this.l_sort(this.top_list);
+        this.orphans_list = this.l_sort(this.orphans_list, 'orphan_dir');
+        this.top_list = this.l_sort(this.top_list, 'top_dir');
     }
 
     note_by_id(id: string): OneNote|undefined

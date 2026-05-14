@@ -7,6 +7,7 @@ export enum SortTypes
     note_title = "note_title",
 	creation_time = "creation_time",
 	modification_time = "modification_time",
+	custom = "custom",
 };
 
 export interface TagHighlightConfig
@@ -33,6 +34,7 @@ export interface VirtFolderSettings
 	firstRun: boolean;
 	tagHighlights: TagHighlightConfig[];
 	exposeMetadata: boolean;
+	customOrder: Record<string, string[]>;
 }
 
 export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
@@ -52,6 +54,7 @@ export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
 	firstRun: true,
 	tagHighlights: [],
 	exposeMetadata: false,
+	customOrder: {},
 };
 
 export class VirtFolderSettingTab extends PluginSettingTab

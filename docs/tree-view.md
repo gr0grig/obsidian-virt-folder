@@ -89,6 +89,18 @@ When you drop note A onto note B:
 2. A new link to B is added to A's frontmatter
 3. The tree updates immediately
 
+### Reordering (Custom Sort)
+
+When the sort mode is set to `custom`, dragging a note onto a **sibling** (a note with the same parent) reorders it instead of moving it to a new parent:
+
+- Drop on the **top half** of a sibling — the note is inserted **before** it
+- Drop on the **bottom half** — the note is inserted **after** it
+- A thin line indicator shows the insertion point during drag
+
+Dragging onto a non-sibling still performs a move (changes parent), even in custom sort mode.
+
+The custom order is stored in plugin data and persists across sessions. New notes added to a folder appear at the end. Renaming a note preserves its position.
+
 ## Context Menu
 
 Right-click on any tree item to access context actions.
@@ -171,10 +183,13 @@ Children within each parent are sorted according to the setting in **Settings > 
 | `note_title` | Alphabetical by display title |
 | `creation_time` | By file creation date |
 | `modification_time` | By last modification date |
+| `custom` | Manual order via drag-and-drop reordering |
 
-The sort order can be reversed with the **Reverse sort order** toggle.
+The sort order can be reversed with the **Reverse sort order** toggle (does not apply to `custom` mode).
 
 Pinned notes always appear first, regardless of sort mode.
+
+In `custom` mode, the order is set per folder by dragging notes onto siblings. See [Drag and Drop > Reordering](#reordering-custom-sort) for details.
 
 ## Scroll Behavior
 

@@ -14,7 +14,7 @@ Allows you to quickly find notes by navigating the knowledge base like a book ta
 ## Features
 
 - The ability to perform all operations using hot keys
-- Dragging and dropping notes with the mouse
+- Dragging and dropping notes with the mouse, including custom sort order
 - Creating and deleting notes via the right-click menu
 - Add files to virtual folders from the file explorer context menu
 - Emoji icon picker with categorized groups for notes

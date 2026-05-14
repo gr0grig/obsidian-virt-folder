@@ -296,6 +296,20 @@ export default class VirtFolderPlugin extends Plugin
 	{
 		if(file instanceof TFile && file.extension === 'md')
 		{
+			// Update customOrder references
+			for(let key in this.settings.customOrder)
+			{
+				let order = this.settings.customOrder[key];
+				let idx = order.indexOf(oldPath);
+				if(idx !== -1) order[idx] = file.path;
+			}
+			if(oldPath in this.settings.customOrder)
+			{
+				this.settings.customOrder[file.path] = this.settings.customOrder[oldPath];
+				delete this.settings.customOrder[oldPath];
+			}
+			this.saveSettings();
+
 			this.data.onRename(file, oldPath);
 			this.update_data();
 		}
@@ -661,6 +675,38 @@ export default class VirtFolderPlugin extends Plugin
 			if(note) note.utime = Date.now();
 		}
 
+		this.update_data();
+	}
+
+	reorderNote(noteId: string, targetId: string, parentKey: string, insertBefore: boolean)
+	{
+		let children: string[];
+		if(parentKey === 'top_dir') children = this.base.top_list;
+		else if(parentKey === 'orphan_dir') children = this.base.orphans_list;
+		else
+		{
+			let parent = this.base.note_by_id(parentKey);
+			if(!parent) return;
+			children = parent.children;
+		}
+
+		if(!this.settings.customOrder[parentKey])
+		{
+			this.settings.customOrder[parentKey] = [...children];
+		}
+
+		let order = this.settings.customOrder[parentKey].filter(id => id !== noteId);
+
+		let targetIdx = order.indexOf(targetId);
+		if(targetIdx === -1) targetIdx = order.length - 1;
+
+		let insertIdx = insertBefore ? targetIdx : targetIdx + 1;
+		order.splice(insertIdx, 0, noteId);
+
+		this.settings.customOrder[parentKey] = order;
+		this.saveSettings();
+
+		this.base.sort_links();
 		this.update_data();
 	}
 }

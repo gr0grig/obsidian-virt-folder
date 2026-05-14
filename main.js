@@ -1186,6 +1186,7 @@ var SortTypes = /* @__PURE__ */ ((SortTypes2) => {
   SortTypes2["note_title"] = "note_title";
   SortTypes2["creation_time"] = "creation_time";
   SortTypes2["modification_time"] = "modification_time";
+  SortTypes2["custom"] = "custom";
   return SortTypes2;
 })(SortTypes || {});
 var DEFAULT_SETTINGS = {
@@ -1203,7 +1204,8 @@ var DEFAULT_SETTINGS = {
   autoReveal: false,
   firstRun: true,
   tagHighlights: [],
-  exposeMetadata: false
+  exposeMetadata: false,
+  customOrder: {}
 };
 var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin2) {
@@ -1730,14 +1732,23 @@ var BaseScanner = class {
       }
     }
   }
-  l_sort(links) {
+  l_sort(links, parentId) {
     let links_copy = [...links];
     let sortBy = this.plugin.settings.sortTreeBy;
     let sortRev = this.plugin.settings.sortTreeRev;
-    if (sortBy == "file_name" /* file_name */) {
+    if (sortBy == "custom" /* custom */ && parentId) {
+      let stored = this.plugin.settings.customOrder[parentId];
+      if (stored) {
+        let linkSet = new Set(links_copy);
+        let ordered = stored.filter((id) => linkSet.has(id));
+        let orderedSet = new Set(ordered);
+        let remaining = links_copy.filter((id) => !orderedSet.has(id));
+        remaining.sort();
+        links_copy = ordered.concat(remaining);
+      }
+    } else if (sortBy == "file_name" /* file_name */ || sortBy == "custom" /* custom */ && !parentId) {
       links_copy.sort();
-    }
-    if (sortBy == "note_title" /* note_title */) {
+    } else if (sortBy == "note_title" /* note_title */) {
       links_copy.sort(
         (a, b) => {
           a = this.link_to_title(a);
@@ -1751,22 +1762,20 @@ var BaseScanner = class {
           return 0;
         }
       );
-    }
-    if (sortBy == "creation_time" /* creation_time */) {
+    } else if (sortBy == "creation_time" /* creation_time */) {
       links_copy.sort(
         (a, b) => {
           return this.link_to_ctime(a) - this.link_to_ctime(b);
         }
       );
-    }
-    if (sortBy == "modification_time" /* modification_time */) {
+    } else if (sortBy == "modification_time" /* modification_time */) {
       links_copy.sort(
         (a, b) => {
           return this.link_to_mtime(a) - this.link_to_mtime(b);
         }
       );
     }
-    if (sortRev)
+    if (sortBy != "custom" /* custom */ && sortRev)
       links_copy.reverse();
     let pinned = links_copy.filter((id) => {
       var _a;
@@ -1781,10 +1790,10 @@ var BaseScanner = class {
   sort_links() {
     for (let id in this.note_list) {
       let note = this.note_list[id];
-      note.children = this.l_sort(note.children);
+      note.children = this.l_sort(note.children, id);
     }
-    this.orphans_list = this.l_sort(this.orphans_list);
-    this.top_list = this.l_sort(this.top_list);
+    this.orphans_list = this.l_sort(this.orphans_list, "orphan_dir");
+    this.top_list = this.l_sort(this.top_list, "top_dir");
   }
   note_by_id(id) {
     if (id in this.note_list) {
@@ -4949,9 +4958,9 @@ var VF_IconPickerModal = class extends import_obsidian5.Modal {
 // components/Note.svelte
 function get_each_context(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[41] = list[i];
-  child_ctx[42] = list;
-  child_ctx[43] = i;
+  child_ctx[42] = list[i];
+  child_ctx[43] = list;
+  child_ctx[44] = i;
   return child_ctx;
 }
 function create_if_block_4(ctx) {
@@ -5100,7 +5109,7 @@ function create_if_block(ctx) {
   );
   const get_key = (ctx2) => (
     /*child*/
-    ctx2[41]
+    ctx2[42]
   );
   for (let i = 0; i < each_value.length; i += 1) {
     let child_ctx = get_each_context(ctx, each_value, i);
@@ -5200,7 +5209,7 @@ function create_each_block(key_1, ctx) {
   let note_1;
   let child = (
     /*child*/
-    ctx[41]
+    ctx[42]
   );
   let current;
   const assign_note_1 = () => (
@@ -5214,13 +5223,13 @@ function create_each_block(key_1, ctx) {
   let note_1_props = {
     id: (
       /*child*/
-      ctx[41]
+      ctx[42]
     ),
     node_path: (
       /*build_path*/
       ctx[18](
         /*child*/
-        ctx[41]
+        ctx[42]
       )
     )
   };
@@ -5242,23 +5251,23 @@ function create_each_block(key_1, ctx) {
     p(new_ctx, dirty) {
       ctx = new_ctx;
       if (child !== /*child*/
-      ctx[41]) {
+      ctx[42]) {
         unassign_note_1();
         child = /*child*/
-        ctx[41];
+        ctx[42];
         assign_note_1();
       }
       const note_1_changes = {};
       if (dirty[0] & /*childList*/
       512)
         note_1_changes.id = /*child*/
-        ctx[41];
+        ctx[42];
       if (dirty[0] & /*childList*/
       512)
         note_1_changes.node_path = /*build_path*/
         ctx[18](
           /*child*/
-          ctx[41]
+          ctx[42]
         );
       note_1.$set(note_1_changes);
     },
@@ -5362,8 +5371,20 @@ function create_fragment(ctx) {
       toggle_class(
         div1,
         "vf-drop-target",
-        /*isDragOver*/
-        ctx[13]
+        /*dropMode*/
+        ctx[13] === "target"
+      );
+      toggle_class(
+        div1,
+        "vf-drop-before",
+        /*dropMode*/
+        ctx[13] === "before"
+      );
+      toggle_class(
+        div1,
+        "vf-drop-after",
+        /*dropMode*/
+        ctx[13] === "after"
       );
       attr(div2, "class", "tree-item is-clickable");
     },
@@ -5538,13 +5559,31 @@ function create_fragment(ctx) {
           ctx2[14] !== ""
         );
       }
-      if (!current || dirty[0] & /*IsOpened, isDragOver*/
+      if (!current || dirty[0] & /*IsOpened, dropMode*/
       8196) {
         toggle_class(
           div1,
           "vf-drop-target",
-          /*isDragOver*/
-          ctx2[13]
+          /*dropMode*/
+          ctx2[13] === "target"
+        );
+      }
+      if (!current || dirty[0] & /*IsOpened, dropMode*/
+      8196) {
+        toggle_class(
+          div1,
+          "vf-drop-before",
+          /*dropMode*/
+          ctx2[13] === "before"
+        );
+      }
+      if (!current || dirty[0] & /*IsOpened, dropMode*/
+      8196) {
+        toggle_class(
+          div1,
+          "vf-drop-after",
+          /*dropMode*/
+          ctx2[13] === "after"
         );
       }
       if (
@@ -5672,31 +5711,43 @@ function instance($$self, $$props, $$invalidate) {
       scrollable.scrollTop = elementTopRelative;
     }
   }
-  let isDragOver = false;
+  let dropMode = "none";
   function getDragParentId() {
     let parentId = node_path[node_path.length - 2];
     if (parentId === "top_dir" || parentId === "orphan_dir")
       return null;
     return parentId;
   }
+  function getRawParentId() {
+    return node_path.length >= 2 ? node_path[node_path.length - 2] : null;
+  }
   function handleDragStart(event) {
     if (type !== "sub_note" || !event.dataTransfer)
       return;
-    event.dataTransfer.setData("text/plain", JSON.stringify({ id, parentId: getDragParentId() }));
+    event.dataTransfer.setData("text/plain", JSON.stringify({
+      id,
+      parentId: getDragParentId(),
+      rawParentId: getRawParentId()
+    }));
     event.dataTransfer.effectAllowed = "move";
   }
   function handleDragOver(event) {
     event.preventDefault();
     if (event.dataTransfer)
       event.dataTransfer.dropEffect = "move";
-    $$invalidate(13, isDragOver = true);
+    if (plugin2.settings.sortTreeBy === "custom" /* custom */ && type === "sub_note") {
+      let rect = event.currentTarget.getBoundingClientRect();
+      $$invalidate(13, dropMode = event.clientY < rect.top + rect.height / 2 ? "before" : "after");
+    } else {
+      $$invalidate(13, dropMode = "target");
+    }
   }
   function handleDragLeave() {
-    $$invalidate(13, isDragOver = false);
+    $$invalidate(13, dropMode = "none");
   }
   function handleDrop(event) {
     event.preventDefault();
-    $$invalidate(13, isDragOver = false);
+    $$invalidate(13, dropMode = "none");
     if (!event.dataTransfer)
       return;
     let dragData;
@@ -5707,8 +5758,16 @@ function instance($$self, $$props, $$invalidate) {
     }
     let draggedId = dragData.id;
     let oldParentId = dragData.parentId;
+    let draggedRawParent = dragData.rawParentId;
     if (draggedId === id || node_path.includes(draggedId)) {
       new import_obsidian6.Notice("Can't move a folder into itself");
+      return;
+    }
+    let myRawParent = getRawParentId();
+    if (draggedRawParent && draggedRawParent === myRawParent && plugin2.settings.sortTreeBy === "custom" /* custom */ && type === "sub_note") {
+      let rect = event.currentTarget.getBoundingClientRect();
+      let insertBefore = event.clientY < rect.top + rect.height / 2;
+      plugin2.reorderNote(draggedId, id, draggedRawParent, insertBefore);
       return;
     }
     let newParentId = null;
@@ -5892,7 +5951,7 @@ function instance($$self, $$props, $$invalidate) {
     myElement,
     children2,
     expandTransitionEnd,
-    isDragOver,
+    dropMode,
     tagHighlightStyle,
     applyDataAttrs,
     collapsedIcon,
@@ -6408,6 +6467,17 @@ var VirtFolderPlugin = class extends import_obsidian9.Plugin {
     };
     this.onRenameFile = (file, oldPath) => {
       if (file instanceof import_obsidian9.TFile && file.extension === "md") {
+        for (let key in this.settings.customOrder) {
+          let order = this.settings.customOrder[key];
+          let idx = order.indexOf(oldPath);
+          if (idx !== -1)
+            order[idx] = file.path;
+        }
+        if (oldPath in this.settings.customOrder) {
+          this.settings.customOrder[file.path] = this.settings.customOrder[oldPath];
+          delete this.settings.customOrder[oldPath];
+        }
+        this.saveSettings();
         this.data.onRename(file, oldPath);
         this.update_data();
       }
@@ -6907,6 +6977,32 @@ var VirtFolderPlugin = class extends import_obsidian9.Plugin {
       if (note)
         note.utime = Date.now();
     }
+    this.update_data();
+  }
+  reorderNote(noteId, targetId, parentKey, insertBefore) {
+    let children2;
+    if (parentKey === "top_dir")
+      children2 = this.base.top_list;
+    else if (parentKey === "orphan_dir")
+      children2 = this.base.orphans_list;
+    else {
+      let parent = this.base.note_by_id(parentKey);
+      if (!parent)
+        return;
+      children2 = parent.children;
+    }
+    if (!this.settings.customOrder[parentKey]) {
+      this.settings.customOrder[parentKey] = [...children2];
+    }
+    let order = this.settings.customOrder[parentKey].filter((id) => id !== noteId);
+    let targetIdx = order.indexOf(targetId);
+    if (targetIdx === -1)
+      targetIdx = order.length - 1;
+    let insertIdx = insertBefore ? targetIdx : targetIdx + 1;
+    order.splice(insertIdx, 0, noteId);
+    this.settings.customOrder[parentKey] = order;
+    this.saveSettings();
+    this.base.sort_links();
     this.update_data();
   }
 };
