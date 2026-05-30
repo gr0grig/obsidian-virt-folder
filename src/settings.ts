@@ -31,7 +31,7 @@ export interface VirtFolderSettings
 	folderAsString: boolean;
 	confirmDelete: boolean;
 	autoReveal: boolean;
-	firstRun: boolean;
+	lastSeenVersion: string;
 	tagHighlights: TagHighlightConfig[];
 	exposeMetadata: boolean;
 	customOrder: Record<string, string[]>;
@@ -51,7 +51,7 @@ export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
 	folderAsString: false,
 	confirmDelete: true,
 	autoReveal: false,
-	firstRun: true,
+	lastSeenVersion: '',
 	tagHighlights: [],
 	exposeMetadata: false,
 	customOrder: {},

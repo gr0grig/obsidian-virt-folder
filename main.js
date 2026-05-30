@@ -1202,7 +1202,7 @@ var DEFAULT_SETTINGS = {
   folderAsString: false,
   confirmDelete: true,
   autoReveal: false,
-  firstRun: true,
+  lastSeenVersion: "",
   tagHighlights: [],
   exposeMetadata: false,
   customOrder: {}
@@ -6445,6 +6445,7 @@ var YamlParser = class {
 var VirtFolderPlugin = class extends import_obsidian9.Plugin {
   constructor() {
     super(...arguments);
+    this.isFirstRun = false;
     this.onOpenFile = (file) => {
       this.setActiveFile(file);
       if (this.settings.autoReveal && file) {
@@ -6612,7 +6613,19 @@ var VirtFolderPlugin = class extends import_obsidian9.Plugin {
         this.VF_NavigateToChild();
       }
     });
-    this.app.workspace.onLayoutReady(() => {
+    this.registerView(VIEW_TYPE_VF_WHATSNEW, (leaf) => new VF_WhatsNewView(leaf, this.manifest.version));
+    this.addCommand({
+      id: "whatsnew",
+      name: "What's new",
+      icon: "info",
+      callback: () => {
+        this.app.workspace.getLeaf("tab").setViewState({
+          type: VIEW_TYPE_VF_WHATSNEW,
+          active: true
+        });
+      }
+    });
+    this.app.workspace.onLayoutReady(async () => {
       this.data.onStartApp();
       this.update_data();
       let activeFile = this.app.workspace.getActiveFile();
@@ -6622,12 +6635,17 @@ var VirtFolderPlugin = class extends import_obsidian9.Plugin {
         if (path)
           this.revealFile(path);
       }
-      if (this.settings.firstRun) {
-        this.settings.firstRun = false;
-        this.saveSettings();
+      if (this.isFirstRun) {
         const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_VF);
         if (leaves.length === 0)
           this.activateView();
+      }
+      if (this.settings.lastSeenVersion !== this.manifest.version) {
+        let wnLeaf = this.app.workspace.getLeaf("tab");
+        await wnLeaf.setViewState({ type: VIEW_TYPE_VF_WHATSNEW, active: true });
+        this.app.workspace.revealLeaf(wnLeaf);
+        this.settings.lastSeenVersion = this.manifest.version;
+        this.saveSettings();
       }
       this.registerEvent(this.app.metadataCache.on("resolve", this.onResolveMetadata));
       this.registerEvent(this.app.workspace.on("file-open", this.onOpenFile, this));
@@ -6672,7 +6690,9 @@ var VirtFolderPlugin = class extends import_obsidian9.Plugin {
     });
   }
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    let saved = await this.loadData();
+    this.isFirstRun = !saved;
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, saved);
   }
   async saveSettings() {
     await this.saveData(this.settings);
@@ -7026,5 +7046,87 @@ var VF_ConfirmModal = class extends import_obsidian9.Modal {
         this.close();
       });
     });
+  }
+};
+var VIEW_TYPE_VF_WHATSNEW = "virt-folder-whatsnew";
+var WHATSNEW_MD = `
+Thank you for using VirtFolder! \u2764\uFE0F This is an independent project, and every share helps new users discover it. If the plugin is useful to you, consider telling a friend or [starring the repo on GitHub](https://github.com/gr0grig/obsidian-virt-folder) \u2014 it really makes a difference!
+
+---
+
+## May 2026
+
+- **Custom sort order** \u2014 manual note ordering via drag-and-drop in \`custom\` sort mode. Drag onto a sibling's top/bottom half to reorder. Order persists across sessions and survives renames.
+- **Frontmatter as data attributes** \u2014 optional setting to expose all frontmatter as \`data-*\` HTML attributes on tree items, enabling CSS snippet styling based on any YAML property.
+
+## April 2026
+
+- **Tag-based highlighting** \u2014 color-coded note backgrounds based on tags. Configurable color and opacity per tag in settings.
+- **Sibling navigation improvements** \u2014 Navigate next/previous sibling now stays within the current parent context for multi-parent notes.
+- **Self-reference protection** \u2014 notes linking to themselves in the Folders property are now ignored, preventing them from disappearing from the tree.
+- **Folder link as string** \u2014 optional setting to write single-parent folder links as a YAML string instead of a list. Auto-converts between string and list when parents change.
+- **Click to collapse** \u2014 clicking a tree node now toggles expand/collapse (previously only expanded).
+- **Array title support** \u2014 when the title YAML property is an array, the first element is used (PR #25).
+
+## March 2026
+
+- **Hide notes by tag** \u2014 filter notes from the tree by tag (Settings > Ignored tags).
+- **Auto-reveal scroll fix** \u2014 notes taller than the viewport align to top instead of centering (PR #22).
+- **Array property safety** \u2014 check if property is array before moving, preventing data corruption (PR #24).
+- **Navigation commands** \u2014 navigate to parent, next/previous sibling, first child. Reveal active file in tree.
+- **Configurable icon property** \u2014 YAML property name for emoji icons is now configurable in settings.
+
+## February 2026
+
+- **File explorer integration** \u2014 add files to virtual folders from Obsidian's file explorer context menu. Pin/unpin and manage icons from file explorer.
+- **Delete with children** \u2014 recursive delete option in tree context menu.
+- **Drag and drop** \u2014 move notes between folders by dragging in the tree. Safety: can't drop onto self or descendants.
+- **Create notes from tree** \u2014 create note / create unique note via tree context menu. Works at ROOT level and under any note.
+- **Database optimization** \u2014 incremental updates instead of full rescans.
+- **Unicode YAML support** \u2014 folder property names now support any language characters.
+- **Unique note creator** \u2014 integration with the Unique Note Creator plugin for auto-generated note names.
+- **Auto-open tree on first run** \u2014 the tree view opens automatically when the plugin is installed for the first time.
+
+## August 2024
+
+- **Link format settings** \u2014 choose between \`[[WikiLinks]]\` and \`[Markdown](links)\` format for folder links in YAML.
+- **Sorting options** \u2014 sort tree children by filename, title, creation time, or modification time. Reverse sort order toggle.
+
+## July 2024
+
+- **Initial release** \u2014 tree view sidebar with collapsible hierarchy built from YAML frontmatter links.
+- **YAML-based structure** \u2014 notes define parent-child relationships via a configurable frontmatter property.
+- **Custom display title** \u2014 use a YAML property as the display title instead of the filename.
+- **Mobile support** \u2014 full compatibility with Obsidian Mobile.
+- **Emoji icons** \u2014 set custom emoji icons on notes via an icon picker with categorized groups and search.
+- **Pinned notes** \u2014 pin notes to the top of their sibling list.
+- **Orphans section** \u2014 notes with no parents and no children are collected in a collapsible Orphans section.
+- **Child counter** \u2014 badge showing the number of direct children on each note.
+- **Active note highlight** \u2014 the currently open note is visually highlighted in the tree.
+- **Auto-reveal** \u2014 optionally auto-scroll the tree to the active file when switching notes.
+- **Confirm before deleting** \u2014 optional confirmation dialog for delete actions.
+- **Ignored paths** \u2014 exclude notes by path prefix from the tree.
+`;
+var VF_WhatsNewView = class extends import_obsidian9.ItemView {
+  constructor(leaf, version) {
+    super(leaf);
+    this.version = version;
+  }
+  getViewType() {
+    return VIEW_TYPE_VF_WHATSNEW;
+  }
+  getDisplayText() {
+    return "What's new in VirtFolder";
+  }
+  getIcon() {
+    return "info";
+  }
+  async onOpen() {
+    let container = this.contentEl;
+    container.empty();
+    container.addClass("markdown-rendered");
+    let md = `# VirtFolder v${this.version}
+` + WHATSNEW_MD;
+    await import_obsidian9.MarkdownRenderer.render(this.app, md, container, "", this);
   }
 };
