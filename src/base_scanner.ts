@@ -2,6 +2,7 @@ import { App, TFile, getAllTags } from 'obsidian';
 import { OneNote } from 'onenote';
 import  VirtFolderPlugin  from 'main';
 import { SortTypes, TagHighlightConfig } from 'settings';
+import path from 'path';
 
 function _is_string(value:any)
 {
@@ -367,7 +368,16 @@ export class BaseScanner
         }
         else if(sortBy == SortTypes.file_name || (sortBy == SortTypes.custom && !parentId))
         {
-            links_copy.sort();
+            links_copy.sort(
+				(a,b) =>
+                {
+                    a = path.basename(a);
+                    b = path.basename(b);
+                    if(a < b) { return -1; }
+                    if(a > b) { return 1; }
+                    return 0;
+                }
+			);
         }
         else if(sortBy == SortTypes.note_title)
         {
