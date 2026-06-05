@@ -361,13 +361,13 @@ export class BaseScanner
                 let ordered = stored.filter(id => linkSet.has(id));
                 let orderedSet = new Set(ordered);
                 let remaining = links_copy.filter(id => !orderedSet.has(id));
-                remaining.sort();
+                remaining.sort((a, b) => a.split('/').pop()!.localeCompare(b.split('/').pop()!));
                 links_copy = ordered.concat(remaining);
             }
         }
         else if(sortBy == SortTypes.file_name || (sortBy == SortTypes.custom && !parentId))
         {
-            links_copy.sort();
+            links_copy.sort((a, b) => a.split('/').pop()!.localeCompare(b.split('/').pop()!));
         }
         else if(sortBy == SortTypes.note_title)
         {
