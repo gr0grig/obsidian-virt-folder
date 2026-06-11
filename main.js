@@ -1192,6 +1192,8 @@ var SortTypes = /* @__PURE__ */ ((SortTypes2) => {
 var DEFAULT_SETTINGS = {
   ignorePath: "",
   ignoreTags: "",
+  includePath: "",
+  includeTags: "",
   propertyName: "Folders",
   titleProp: "",
   iconProp: "vf_icon",
@@ -1216,6 +1218,8 @@ var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
   init_settings() {
     this.update_filter(this.plugin.settings.ignorePath);
     this.update_ignored_tags(this.plugin.settings.ignoreTags);
+    this.update_include_paths(this.plugin.settings.includePath);
+    this.update_include_tags(this.plugin.settings.includeTags);
     this.update_prop_name(this.plugin.settings.propertyName);
     this.update_title(this.plugin.settings.titleProp);
     this.update_icon_prop(this.plugin.settings.iconProp);
@@ -1318,7 +1322,29 @@ var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
       textArea.inputEl.setAttr("rows", 4);
       textArea.inputEl.setAttr("cols", 40);
     });
-    new import_obsidian.Setting(containerEl).setName("Ignored files").addText((text2) => {
+    new import_obsidian.Setting(containerEl).setName("List of included paths").setDesc("If set, only notes whose path starts with one of these lines are shown. Leave empty to show all paths").addTextArea((textArea) => {
+      textArea.setValue(this.plugin.settings.includePath).setPlaceholder("Enter one or more paths relative to the archive root").onChange(async (value) => {
+        this.plugin.settings.includePath = value;
+        await this.plugin.saveSettings();
+        this.update_include_paths(value);
+        this.update_counter();
+        this.update_note_list();
+      });
+      textArea.inputEl.setAttr("rows", 6);
+      textArea.inputEl.setAttr("cols", 40);
+    });
+    new import_obsidian.Setting(containerEl).setName("List of included tags").setDesc("If set, only notes with one of these tags are shown. Combined with included paths (a note matching either is shown). One tag per line, # is optional").addTextArea((textArea) => {
+      textArea.setValue(this.plugin.settings.includeTags).setPlaceholder("project\n#area").onChange(async (value) => {
+        this.plugin.settings.includeTags = value;
+        await this.plugin.saveSettings();
+        this.update_include_tags(value);
+        this.update_counter();
+        this.update_note_list();
+      });
+      textArea.inputEl.setAttr("rows", 4);
+      textArea.inputEl.setAttr("cols", 40);
+    });
+    new import_obsidian.Setting(containerEl).setName("Hidden files").addText((text2) => {
       text2.setValue("0").setDisabled(true);
       this.counter = text2;
     });
@@ -1432,6 +1458,14 @@ var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
     let tags = this.parse_text_area(value).map((t) => t.startsWith("#") ? t : "#" + t);
     this.plugin.base.settings.set_ignored_tags(tags);
   }
+  update_include_paths(value) {
+    let paths = this.parse_text_area(value);
+    this.plugin.base.settings.set_include_paths(paths);
+  }
+  update_include_tags(value) {
+    let tags = this.parse_text_area(value).map((t) => t.startsWith("#") ? t : "#" + t);
+    this.plugin.base.settings.set_include_tags(tags);
+  }
   parse_text_area(value) {
     return value.split(/\r|\n/).map((n) => n.trim()).filter((n) => n);
   }
@@ -1493,6 +1527,8 @@ var ScanSettings = class {
   constructor() {
     this.filter = [];
     this.ignored_tags = [];
+    this.include_paths = [];
+    this.include_tags = [];
     this.title = "";
     this.icon_prop = "vf_icon";
     this.tag_highlights = [];
@@ -1504,6 +1540,12 @@ var ScanSettings = class {
   }
   set_ignored_tags(tags) {
     this.ignored_tags = tags;
+  }
+  set_include_paths(paths) {
+    this.include_paths = paths;
+  }
+  set_include_tags(tags) {
+    this.include_tags = tags;
   }
   set_title(title) {
     this.title = title;
@@ -1582,8 +1624,33 @@ var BaseScanner = class {
           }
         }
       }
+      if (!this._is_included(file))
+        return false;
       return true;
     });
+  }
+  _is_included(file) {
+    let paths = this.settings.include_paths;
+    let tags = this.settings.include_tags;
+    if (paths.length === 0 && tags.length === 0)
+      return true;
+    for (let p of paths) {
+      if (file.path.startsWith(p))
+        return true;
+    }
+    if (tags.length > 0) {
+      let cache = this.app.metadataCache.getFileCache(file);
+      if (cache) {
+        let file_tags = (0, import_obsidian2.getAllTags)(cache);
+        if (file_tags) {
+          for (let tag of file_tags) {
+            if (tags.includes(tag))
+              return true;
+          }
+        }
+      }
+    }
+    return false;
   }
   get_meta_value(file, prop) {
     let metadata = this.app.metadataCache.getFileCache(file);
@@ -1743,11 +1810,11 @@ var BaseScanner = class {
         let ordered = stored.filter((id) => linkSet.has(id));
         let orderedSet = new Set(ordered);
         let remaining = links_copy.filter((id) => !orderedSet.has(id));
-        remaining.sort();
+        remaining.sort((a, b) => a.split("/").pop().localeCompare(b.split("/").pop()));
         links_copy = ordered.concat(remaining);
       }
     } else if (sortBy == "file_name" /* file_name */ || sortBy == "custom" /* custom */ && !parentId) {
-      links_copy.sort();
+      links_copy.sort((a, b) => a.split("/").pop().localeCompare(b.split("/").pop()));
     } else if (sortBy == "note_title" /* note_title */) {
       links_copy.sort(
         (a, b) => {
@@ -1950,6 +2017,8 @@ var BaseScanner = class {
         }
       }
     }
+    if (!this._is_included(file))
+      return true;
     return false;
   }
   rebuild_top_and_sort() {

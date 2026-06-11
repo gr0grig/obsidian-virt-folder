@@ -21,6 +21,8 @@ export interface VirtFolderSettings
 {
 	ignorePath: string;
 	ignoreTags: string;
+	includePath: string;
+	includeTags: string;
 	propertyName: string;
 	titleProp: string;
 	iconProp: string;
@@ -41,6 +43,8 @@ export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
 {
 	ignorePath: '',
 	ignoreTags: '',
+	includePath: '',
+	includeTags: '',
 	propertyName: 'Folders',
 	titleProp: '',
 	iconProp: 'vf_icon',
@@ -72,6 +76,8 @@ export class VirtFolderSettingTab extends PluginSettingTab
 	{
 		this.update_filter(this.plugin.settings.ignorePath);
 		this.update_ignored_tags(this.plugin.settings.ignoreTags);
+		this.update_include_paths(this.plugin.settings.includePath);
+		this.update_include_tags(this.plugin.settings.includeTags);
 		this.update_prop_name(this.plugin.settings.propertyName);
 		this.update_title(this.plugin.settings.titleProp);
 		this.update_icon_prop(this.plugin.settings.iconProp);
@@ -262,7 +268,53 @@ export class VirtFolderSettingTab extends PluginSettingTab
 
 
 		new Setting(containerEl)
-		.setName("Ignored files")
+		.setName("List of included paths")
+		.setDesc("If set, only notes whose path starts with one of these lines are shown. Leave empty to show all paths")
+		.addTextArea((textArea: TextAreaComponent) =>
+		{
+			textArea
+				.setValue(this.plugin.settings.includePath)
+				.setPlaceholder('Enter one or more paths relative to the archive root')
+				.onChange(async (value) =>
+				{
+					this.plugin.settings.includePath = value;
+					await this.plugin.saveSettings();
+
+					this.update_include_paths(value);
+					this.update_counter();
+					this.update_note_list();
+				});
+
+			textArea.inputEl.setAttr("rows", 6);
+			textArea.inputEl.setAttr("cols", 40);
+		});
+
+
+		new Setting(containerEl)
+		.setName("List of included tags")
+		.setDesc("If set, only notes with one of these tags are shown. Combined with included paths (a note matching either is shown). One tag per line, # is optional")
+		.addTextArea((textArea: TextAreaComponent) =>
+		{
+			textArea
+				.setValue(this.plugin.settings.includeTags)
+				.setPlaceholder('project\n#area')
+				.onChange(async (value) =>
+				{
+					this.plugin.settings.includeTags = value;
+					await this.plugin.saveSettings();
+
+					this.update_include_tags(value);
+					this.update_counter();
+					this.update_note_list();
+				});
+
+			textArea.inputEl.setAttr("rows", 4);
+			textArea.inputEl.setAttr("cols", 40);
+		});
+
+
+		new Setting(containerEl)
+		.setName("Hidden files")
 		.addText((text: TextComponent) =>
 		{
 			text.setValue('0').setDisabled(true);
@@ -442,6 +494,18 @@ export class VirtFolderSettingTab extends PluginSettingTab
 	{
 		let tags = this.parse_text_area(value).map(t => t.startsWith('#') ? t : '#' + t);
 		this.plugin.base.settings.set_ignored_tags(tags);
+	}
+
+	update_include_paths(value:string)
+	{
+		let paths = this.parse_text_area(value);
+		this.plugin.base.settings.set_include_paths(paths);
+	}
+
+	update_include_tags(value:string)
+	{
+		let tags = this.parse_text_area(value).map(t => t.startsWith('#') ? t : '#' + t);
+		this.plugin.base.settings.set_include_tags(tags);
 	}
 
 	parse_text_area(value:string)

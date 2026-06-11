@@ -22,6 +22,8 @@ class ScanSettings
 {
 	filter: string[] = [];
 	ignored_tags: string[] = [];
+	include_paths: string[] = [];
+	include_tags: string[] = [];
 	title: string = '';
 	icon_prop: string = 'vf_icon';
 	tag_highlights: TagHighlightConfig[] = [];
@@ -36,6 +38,16 @@ class ScanSettings
     set_ignored_tags(tags: string[])
     {
         this.ignored_tags = tags;
+    }
+
+    set_include_paths(paths: string[])
+    {
+        this.include_paths = paths;
+    }
+
+    set_include_tags(tags: string[])
+    {
+        this.include_tags = tags;
     }
 
     set_title(title: string)
@@ -150,8 +162,41 @@ export class BaseScanner
                 }
             }
 
+            if (!this._is_included(file)) return false;
+
             return true;
         });
+    }
+
+    _is_included(file: TFile): boolean
+    {
+        let paths = this.settings.include_paths;
+        let tags = this.settings.include_tags;
+
+        if (paths.length === 0 && tags.length === 0) return true;
+
+        for (let p of paths)
+        {
+            if (file.path.startsWith(p)) return true;
+        }
+
+        if (tags.length > 0)
+        {
+            let cache = this.app.metadataCache.getFileCache(file);
+            if (cache)
+            {
+                let file_tags = getAllTags(cache);
+                if (file_tags)
+                {
+                    for (let tag of file_tags)
+                    {
+                        if (tags.includes(tag)) return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     get_meta_value(file:TFile, prop:string): string | null
@@ -636,6 +681,8 @@ export class BaseScanner
                 }
             }
         }
+
+        if (!this._is_included(file)) return true;
 
         return false;
     }
