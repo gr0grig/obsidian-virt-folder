@@ -1,7 +1,7 @@
 {
 	"id": "virt-folder",
 	"name": "VirtFolder",
-	"version": "1.1.24",
+	"version": "1.1.25",
 	"minAppVersion": "0.15.0",
 	"description": "Creating a hierarchical structure like Luhmann's Zettelkasten",
 

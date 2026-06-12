@@ -33,6 +33,7 @@ export interface VirtFolderSettings
 	folderAsString: boolean;
 	confirmDelete: boolean;
 	autoReveal: boolean;
+	autoCollapse: boolean;
 	lastSeenVersion: string;
 	tagHighlights: TagHighlightConfig[];
 	exposeMetadata: boolean;
@@ -55,6 +56,7 @@ export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
 	folderAsString: false,
 	confirmDelete: true,
 	autoReveal: false,
+	autoCollapse: false,
 	lastSeenVersion: '',
 	tagHighlights: [],
 	exposeMetadata: false,
@@ -375,6 +377,20 @@ export class VirtFolderSettingTab extends PluginSettingTab
 			tg.onChange(async (value) =>
 			{
 				this.plugin.settings.autoReveal = value;
+				await this.plugin.saveSettings();
+			});
+		});
+
+
+		new Setting(containerEl)
+		.setName("Auto collapse other folders")
+		.setDesc("When revealing the active file, collapse the branches that are not on the path to it")
+		.addToggle( (tg:ToggleComponent) =>
+		{
+			tg.setValue(this.plugin.settings.autoCollapse);
+			tg.onChange(async (value) =>
+			{
+				this.plugin.settings.autoCollapse = value;
 				await this.plugin.saveSettings();
 			});
 		});

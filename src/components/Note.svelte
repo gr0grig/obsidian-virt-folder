@@ -317,6 +317,11 @@
 		menu.showAtMouseEvent(event);
 	}
 
+	export const collapse = () =>
+	{
+		isCollapsed = true;
+	}
+
 	export const focusNotes = async (pathNotes: string[]) =>
 	{
 		isCollapsed = false;
@@ -324,10 +329,19 @@
 
 		let next:string|undefined = pathNotes.shift();
 
+		if(next && plugin.settings.autoCollapse)
+		{
+			// collapse sibling branches that are not on the path to the active note
+			for(let key in children)
+			{
+				if(key !== next) children[key].collapse();
+			}
+		}
+
 		if(pathNotes.length === 0) await expandTransitionWaiter;
-		
+
 		if(!next)
-		{	
+		{
 			if(myElement)
 			{
 				scrollIntoMiddle();

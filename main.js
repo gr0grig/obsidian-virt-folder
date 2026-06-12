@@ -1204,6 +1204,7 @@ var DEFAULT_SETTINGS = {
   folderAsString: false,
   confirmDelete: true,
   autoReveal: false,
+  autoCollapse: false,
   lastSeenVersion: "",
   tagHighlights: [],
   exposeMetadata: false,
@@ -1375,6 +1376,13 @@ var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
       tg.setValue(this.plugin.settings.autoReveal);
       tg.onChange(async (value) => {
         this.plugin.settings.autoReveal = value;
+        await this.plugin.saveSettings();
+      });
+    });
+    new import_obsidian.Setting(containerEl).setName("Auto collapse other folders").setDesc("When revealing the active file, collapse the branches that are not on the path to it").addToggle((tg) => {
+      tg.setValue(this.plugin.settings.autoCollapse);
+      tg.onChange(async (value) => {
+        this.plugin.settings.autoCollapse = value;
         await this.plugin.saveSettings();
       });
     });
@@ -5027,9 +5035,9 @@ var VF_IconPickerModal = class extends import_obsidian5.Modal {
 // components/Note.svelte
 function get_each_context(ctx, list, i) {
   const child_ctx = ctx.slice();
-  child_ctx[42] = list[i];
-  child_ctx[43] = list;
-  child_ctx[44] = i;
+  child_ctx[43] = list[i];
+  child_ctx[44] = list;
+  child_ctx[45] = i;
   return child_ctx;
 }
 function create_if_block_4(ctx) {
@@ -5054,7 +5062,7 @@ function create_if_block_4(ctx) {
         dispose = [
           listen(div, "click", stop_propagation(
             /*click_handler*/
-            ctx[32]
+            ctx[33]
           )),
           action_destroyer(collapsedIcon_action = /*collapsedIcon*/
           ctx[16].call(null, div))
@@ -5178,7 +5186,7 @@ function create_if_block(ctx) {
   );
   const get_key = (ctx2) => (
     /*child*/
-    ctx2[42]
+    ctx2[43]
   );
   for (let i = 0; i < each_value.length; i += 1) {
     let child_ctx = get_each_context(ctx, each_value, i);
@@ -5213,7 +5221,7 @@ function create_if_block(ctx) {
             div,
             "introend",
             /*introend_handler*/
-            ctx[35]
+            ctx[36]
           )
         ];
         mounted = true;
@@ -5278,27 +5286,27 @@ function create_each_block(key_1, ctx) {
   let note_1;
   let child = (
     /*child*/
-    ctx[42]
+    ctx[43]
   );
   let current;
   const assign_note_1 = () => (
     /*note_1_binding*/
-    ctx[34](note_1, child)
+    ctx[35](note_1, child)
   );
   const unassign_note_1 = () => (
     /*note_1_binding*/
-    ctx[34](null, child)
+    ctx[35](null, child)
   );
   let note_1_props = {
     id: (
       /*child*/
-      ctx[42]
+      ctx[43]
     ),
     node_path: (
       /*build_path*/
       ctx[18](
         /*child*/
-        ctx[42]
+        ctx[43]
       )
     )
   };
@@ -5320,23 +5328,23 @@ function create_each_block(key_1, ctx) {
     p(new_ctx, dirty) {
       ctx = new_ctx;
       if (child !== /*child*/
-      ctx[42]) {
+      ctx[43]) {
         unassign_note_1();
         child = /*child*/
-        ctx[42];
+        ctx[43];
         assign_note_1();
       }
       const note_1_changes = {};
       if (dirty[0] & /*childList*/
       512)
         note_1_changes.id = /*child*/
-        ctx[42];
+        ctx[43];
       if (dirty[0] & /*childList*/
       512)
         note_1_changes.node_path = /*build_path*/
         ctx[18](
           /*child*/
-          ctx[42]
+          ctx[43]
         );
       note_1.$set(note_1_changes);
     },
@@ -5477,7 +5485,7 @@ function create_fragment(ctx) {
       append(div2, t5);
       if (if_block4)
         if_block4.m(div2, null);
-      ctx[36](div2);
+      ctx[37](div2);
       current = true;
       if (!mounted) {
         dispose = [
@@ -5520,7 +5528,7 @@ function create_fragment(ctx) {
             div1,
             "click",
             /*click_handler_1*/
-            ctx[33]
+            ctx[34]
           )
         ];
         mounted = true;
@@ -5704,7 +5712,7 @@ function create_fragment(ctx) {
         if_block3.d();
       if (if_block4)
         if_block4.d();
-      ctx[36](null);
+      ctx[37](null);
       mounted = false;
       run_all(dispose);
     }
@@ -5714,8 +5722,8 @@ function instance($$self, $$props, $$invalidate) {
   let tagHighlightStyle;
   let $data;
   let $active_id;
-  component_subscribe($$self, data, ($$value) => $$invalidate(30, $data = $$value));
-  component_subscribe($$self, active_id, ($$value) => $$invalidate(31, $active_id = $$value));
+  component_subscribe($$self, data, ($$value) => $$invalidate(31, $data = $$value));
+  component_subscribe($$self, active_id, ($$value) => $$invalidate(32, $active_id = $$value));
   let { id = "unknown-link-id" } = $$props;
   let { type = "sub_note" } = $$props;
   let { node_path = [] } = $$props;
@@ -5909,10 +5917,19 @@ function instance($$self, $$props, $$invalidate) {
     }
     menu.showAtMouseEvent(event);
   }
+  const collapse = () => {
+    $$invalidate(6, isCollapsed = true);
+  };
   const focusNotes = (pathNotes) => __awaiter(void 0, void 0, void 0, function* () {
     $$invalidate(6, isCollapsed = false);
     yield tick();
     let next = pathNotes.shift();
+    if (next && plugin2.settings.autoCollapse) {
+      for (let key in children2) {
+        if (key !== next)
+          children2[key].collapse();
+      }
+    }
     if (pathNotes.length === 0)
       yield expandTransitionWaiter;
     if (!next) {
@@ -5964,9 +5981,9 @@ function instance($$self, $$props, $$invalidate) {
       $$invalidate(25, node_path = $$props2.node_path);
   };
   $$self.$$.update = () => {
-    if ($$self.$$.dirty[0] & /*id, type, $data, note*/
-    1207959555 | $$self.$$.dirty[1] & /*$active_id*/
-    1) {
+    if ($$self.$$.dirty[0] & /*id, type, note*/
+    268435459 | $$self.$$.dirty[1] & /*$active_id, $data*/
+    3) {
       $: {
         $$invalidate(2, IsOpened = id == $active_id);
         if (type == "top_dir") {
@@ -5982,13 +5999,13 @@ function instance($$self, $$props, $$invalidate) {
           $$invalidate(7, dataAttrs = {});
         }
         if (type == "sub_note") {
-          $$invalidate(27, note = $data.note_list[id]);
+          $$invalidate(28, note = $data.note_list[id]);
           if (note) {
             $$invalidate(3, title = note.title);
             $$invalidate(4, noteIcon = note.icon || "");
             $$invalidate(5, isPinned = note.is_pinned);
-            $$invalidate(28, highlightColor = note.highlight_color || "");
-            $$invalidate(29, highlightOpacity = note.highlight_opacity || 0);
+            $$invalidate(29, highlightColor = note.highlight_color || "");
+            $$invalidate(30, highlightOpacity = note.highlight_opacity || 0);
             $$invalidate(8, childCounter = note.count_children());
             $$invalidate(9, childList = note.children);
             let attrs = {};
@@ -6001,7 +6018,7 @@ function instance($$self, $$props, $$invalidate) {
       }
     }
     if ($$self.$$.dirty[0] & /*highlightColor, highlightOpacity, IsOpened*/
-    805306372) {
+    1610612740) {
       $:
         $$invalidate(14, tagHighlightStyle = highlightColor && highlightOpacity > 0 && !IsOpened ? `background-color: color-mix(in srgb, ${highlightColor} ${highlightOpacity * 100}%, transparent)` : "");
     }
@@ -6033,6 +6050,7 @@ function instance($$self, $$props, $$invalidate) {
     handleDrop,
     handleContextMenu,
     node_path,
+    collapse,
     focusNotes,
     note,
     highlightColor,
@@ -6059,14 +6077,18 @@ var Note = class extends SvelteComponent {
         id: 0,
         type: 1,
         node_path: 25,
-        focusNotes: 26
+        collapse: 26,
+        focusNotes: 27
       },
       null,
       [-1, -1]
     );
   }
-  get focusNotes() {
+  get collapse() {
     return this.$$.ctx[26];
+  }
+  get focusNotes() {
+    return this.$$.ctx[27];
   }
 };
 var Note_default = Note;
