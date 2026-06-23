@@ -28,6 +28,7 @@ class ScanSettings
 	icon_prop: string = 'vf_icon';
 	tag_highlights: TagHighlightConfig[] = [];
 	expose_metadata: boolean = false;
+	hide_orphans: boolean = false;
     prop_regexp?:RegExp = undefined;
 
     set_filter(filter: string[])
@@ -68,6 +69,11 @@ class ScanSettings
     set_expose_metadata(value: boolean)
     {
         this.expose_metadata = value;
+    }
+
+    set_hide_orphans(value: boolean)
+    {
+        this.hide_orphans = value;
     }
 
     set_prop(prop: string)

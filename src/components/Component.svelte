@@ -15,7 +15,7 @@
 
 {#if $data !== undefined}
 	<Note type="top_dir" node_path={['top_dir']} bind:this={children['top_dir']} />
-	{#if $data.orphans_list.length}
+	{#if $data.orphans_list.length && !$data.settings.hide_orphans}
 	<Note type="orphan_dir" node_path={['orphan_dir']} bind:this={children['orphan_dir']} />
 	{/if}
 {/if}

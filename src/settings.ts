@@ -29,6 +29,7 @@ export interface VirtFolderSettings
 	cmdShowTitle: boolean;
 	sortTreeBy: SortTypes;
 	sortTreeRev: boolean;
+	hideOrphans: boolean;
 	UseWikiLinks: boolean;
 	folderAsString: boolean;
 	confirmDelete: boolean;
@@ -52,6 +53,7 @@ export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
 	cmdShowTitle: false,
 	sortTreeBy: SortTypes.file_name,
 	sortTreeRev: false,
+	hideOrphans: false,
 	UseWikiLinks: true,
 	folderAsString: false,
 	confirmDelete: true,
@@ -85,6 +87,7 @@ export class VirtFolderSettingTab extends PluginSettingTab
 		this.update_icon_prop(this.plugin.settings.iconProp);
 		this.update_tag_highlights();
 		this.plugin.base.settings.set_expose_metadata(this.plugin.settings.exposeMetadata);
+		this.update_hide_orphans(this.plugin.settings.hideOrphans);
 	}
 
 	display(): void
@@ -218,6 +221,22 @@ export class VirtFolderSettingTab extends PluginSettingTab
 			{
 				this.plugin.settings.sortTreeRev = value;
 				await this.plugin.saveSettings();
+				this.update_note_list();
+			});
+		});
+
+
+		new Setting(containerEl)
+		.setName("Hide orphans")
+		.setDesc("Do not list orphan notes (notes with no parents and no children) in the tree")
+		.addToggle( (tg:ToggleComponent) =>
+		{
+			tg.setValue(this.plugin.settings.hideOrphans);
+			tg.onChange(async (value) =>
+			{
+				this.plugin.settings.hideOrphans = value;
+				await this.plugin.saveSettings();
+				this.update_hide_orphans(value);
 				this.update_note_list();
 			});
 		});
@@ -568,6 +587,11 @@ export class VirtFolderSettingTab extends PluginSettingTab
 	update_tag_highlights()
 	{
 		this.plugin.base.settings.set_tag_highlights(this.plugin.settings.tagHighlights);
+	}
+
+	update_hide_orphans(value:boolean)
+	{
+		this.plugin.base.settings.set_hide_orphans(value);
 	}
 
 	get_css_var(variable:string)

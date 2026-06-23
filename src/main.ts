@@ -191,16 +191,6 @@ export default class VirtFolderPlugin extends Plugin
 				if(leaves.length === 0) this.activateView();
 			}
 
-			if(this.settings.lastSeenVersion !== this.manifest.version)
-			{
-				let wnLeaf = this.app.workspace.getLeaf('tab');
-				await wnLeaf.setViewState({ type: VIEW_TYPE_VF_WHATSNEW, active: true });
-				this.app.workspace.revealLeaf(wnLeaf);
-
-				this.settings.lastSeenVersion = this.manifest.version;
-				this.saveSettings();
-			}
-
 			this.registerEvent(this.app.metadataCache.on("resolve", this.onResolveMetadata));
 			this.registerEvent(this.app.workspace.on("file-open", this.onOpenFile, this));
 			this.registerEvent(this.app.vault.on("create", this.onCreateFile));

@@ -1200,6 +1200,7 @@ var DEFAULT_SETTINGS = {
   cmdShowTitle: false,
   sortTreeBy: "file_name" /* file_name */,
   sortTreeRev: false,
+  hideOrphans: false,
   UseWikiLinks: true,
   folderAsString: false,
   confirmDelete: true,
@@ -1226,6 +1227,7 @@ var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
     this.update_icon_prop(this.plugin.settings.iconProp);
     this.update_tag_highlights();
     this.plugin.base.settings.set_expose_metadata(this.plugin.settings.exposeMetadata);
+    this.update_hide_orphans(this.plugin.settings.hideOrphans);
   }
   display() {
     let { containerEl } = this;
@@ -1298,6 +1300,15 @@ var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
       tg.onChange(async (value) => {
         this.plugin.settings.sortTreeRev = value;
         await this.plugin.saveSettings();
+        this.update_note_list();
+      });
+    });
+    new import_obsidian.Setting(containerEl).setName("Hide orphans").setDesc("Do not list orphan notes (notes with no parents and no children) in the tree").addToggle((tg) => {
+      tg.setValue(this.plugin.settings.hideOrphans);
+      tg.onChange(async (value) => {
+        this.plugin.settings.hideOrphans = value;
+        await this.plugin.saveSettings();
+        this.update_hide_orphans(value);
         this.update_note_list();
       });
     });
@@ -1505,6 +1516,9 @@ var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
   update_tag_highlights() {
     this.plugin.base.settings.set_tag_highlights(this.plugin.settings.tagHighlights);
   }
+  update_hide_orphans(value) {
+    this.plugin.base.settings.set_hide_orphans(value);
+  }
   get_css_var(variable) {
     let el = document.querySelector("body");
     if (!el)
@@ -1541,6 +1555,7 @@ var ScanSettings = class {
     this.icon_prop = "vf_icon";
     this.tag_highlights = [];
     this.expose_metadata = false;
+    this.hide_orphans = false;
     this.prop_regexp = void 0;
   }
   set_filter(filter) {
@@ -1566,6 +1581,9 @@ var ScanSettings = class {
   }
   set_expose_metadata(value) {
     this.expose_metadata = value;
+  }
+  set_hide_orphans(value) {
+    this.hide_orphans = value;
   }
   set_prop(prop) {
     let regexp_str = `^${prop}(\\.\\d+){0,1}$`;
@@ -6104,7 +6122,8 @@ function create_if_block2(ctx) {
   ctx[3](note);
   let if_block = (
     /*$data*/
-    ctx[1].orphans_list.length && create_if_block_12(ctx)
+    ctx[1].orphans_list.length && !/*$data*/
+    ctx[1].settings.hide_orphans && create_if_block_12(ctx)
   );
   return {
     c() {
@@ -6127,7 +6146,8 @@ function create_if_block2(ctx) {
       note.$set(note_changes);
       if (
         /*$data*/
-        ctx2[1].orphans_list.length
+        ctx2[1].orphans_list.length && !/*$data*/
+        ctx2[1].settings.hide_orphans
       ) {
         if (if_block) {
           if_block.p(ctx2, dirty);
@@ -6730,13 +6750,6 @@ var VirtFolderPlugin = class extends import_obsidian9.Plugin {
         const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_VF);
         if (leaves.length === 0)
           this.activateView();
-      }
-      if (this.settings.lastSeenVersion !== this.manifest.version) {
-        let wnLeaf = this.app.workspace.getLeaf("tab");
-        await wnLeaf.setViewState({ type: VIEW_TYPE_VF_WHATSNEW, active: true });
-        this.app.workspace.revealLeaf(wnLeaf);
-        this.settings.lastSeenVersion = this.manifest.version;
-        this.saveSettings();
       }
       this.registerEvent(this.app.metadataCache.on("resolve", this.onResolveMetadata));
       this.registerEvent(this.app.workspace.on("file-open", this.onOpenFile, this));
