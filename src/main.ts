@@ -334,6 +334,19 @@ export default class VirtFolderPlugin extends Plugin
 	{
 		this.data.onChange(file);
 		this.update_data();
+
+		// When the active file's folder property changes, it is relocated in the
+		// tree and its Svelte node is recreated in a collapsed state, hiding it
+		// inside a collapsed branch. Re-reveal it so it stays visible (issue #41).
+		if(this.settings.autoReveal)
+		{
+			let activeFile = this.app.workspace.getActiveFile();
+			if(activeFile && activeFile.path === file.path)
+			{
+				let path = this.base.get_next_path(file.path);
+				if(path) this.revealFile(path);
+			}
+		}
 	};
 
 	revealFile(path: string[])
@@ -762,6 +775,12 @@ const WHATSNEW_MD = `
 Thank you for using VirtFolder! ❤️ This is an independent project, and every share helps new users discover it. If the plugin is useful to you, consider telling a friend or [starring the repo on GitHub](https://github.com/gr0grig/obsidian-virt-folder) — it really makes a difference!
 
 ---
+
+## July 2026
+
+- **Open without expanding** — clicking a note's title now opens it without toggling its children. Expand/collapse is done via the arrow icon. A setting (\`Expand/collapse on title click\`) restores the old click-to-toggle behavior.
+- **Hide orphans** — optional setting to keep orphan notes (no parents, no children) out of the tree, useful for large vaults and keyboard navigation.
+- **Reveal on folder change fix** — changing a note's folder property no longer hides it inside a collapsed branch; the active note is re-revealed at its new location.
 
 ## May 2026
 

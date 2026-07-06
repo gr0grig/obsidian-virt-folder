@@ -55,7 +55,7 @@ export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
 	sortTreeBy: SortTypes.file_name,
 	sortTreeRev: false,
 	hideOrphans: false,
-	expandOnClick: true,
+	expandOnClick: false,
 	UseWikiLinks: true,
 	folderAsString: false,
 	confirmDelete: true,

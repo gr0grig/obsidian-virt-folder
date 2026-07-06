@@ -1201,6 +1201,7 @@ var DEFAULT_SETTINGS = {
   sortTreeBy: "file_name" /* file_name */,
   sortTreeRev: false,
   hideOrphans: false,
+  expandOnClick: false,
   UseWikiLinks: true,
   folderAsString: false,
   confirmDelete: true,
@@ -1310,6 +1311,13 @@ var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
         await this.plugin.saveSettings();
         this.update_hide_orphans(value);
         this.update_note_list();
+      });
+    });
+    new import_obsidian.Setting(containerEl).setName("Expand/collapse on title click").setDesc("When off, clicking a note's title only opens it; expanding or collapsing its children works via the arrow icon only").addToggle((tg) => {
+      tg.setValue(this.plugin.settings.expandOnClick);
+      tg.onChange(async (value) => {
+        this.plugin.settings.expandOnClick = value;
+        await this.plugin.saveSettings();
       });
     });
     new import_obsidian.Setting(containerEl).setName("List of ignored paths").setDesc("Each line is interpreted as the start of an ignored path").addTextArea((textArea) => {
@@ -5080,10 +5088,10 @@ function create_if_block_4(ctx) {
         dispose = [
           listen(div, "click", stop_propagation(
             /*click_handler*/
-            ctx[33]
+            ctx[34]
           )),
           action_destroyer(collapsedIcon_action = /*collapsedIcon*/
-          ctx[16].call(null, div))
+          ctx[17].call(null, div))
         ];
         mounted = true;
       }
@@ -5233,13 +5241,13 @@ function create_if_block(ctx) {
             div,
             "introstart",
             /*expandTransitionStart*/
-            ctx[17]
+            ctx[18]
           ),
           listen(
             div,
             "introend",
             /*introend_handler*/
-            ctx[36]
+            ctx[37]
           )
         ];
         mounted = true;
@@ -5247,7 +5255,7 @@ function create_if_block(ctx) {
     },
     p(ctx2, dirty) {
       if (dirty[0] & /*childList, build_path, children*/
-      264704) {
+      526848) {
         each_value = ensure_array_like(
           /*childList*/
           ctx2[9]
@@ -5309,11 +5317,11 @@ function create_each_block(key_1, ctx) {
   let current;
   const assign_note_1 = () => (
     /*note_1_binding*/
-    ctx[35](note_1, child)
+    ctx[36](note_1, child)
   );
   const unassign_note_1 = () => (
     /*note_1_binding*/
-    ctx[35](null, child)
+    ctx[36](null, child)
   );
   let note_1_props = {
     id: (
@@ -5322,7 +5330,7 @@ function create_each_block(key_1, ctx) {
     ),
     node_path: (
       /*build_path*/
-      ctx[18](
+      ctx[19](
         /*child*/
         ctx[43]
       )
@@ -5360,7 +5368,7 @@ function create_each_block(key_1, ctx) {
       if (dirty[0] & /*childList*/
       512)
         note_1_changes.node_path = /*build_path*/
-        ctx[18](
+        ctx[19](
           /*child*/
           ctx[43]
         );
@@ -5503,12 +5511,12 @@ function create_fragment(ctx) {
       append(div2, t5);
       if (if_block4)
         if_block4.m(div2, null);
-      ctx[37](div2);
+      ctx[38](div2);
       current = true;
       if (!mounted) {
         dispose = [
           action_destroyer(applyDataAttrs_action = /*applyDataAttrs*/
-          ctx[15].call(
+          ctx[16].call(
             null,
             div1,
             /*dataAttrs*/
@@ -5518,35 +5526,35 @@ function create_fragment(ctx) {
             div1,
             "dragstart",
             /*handleDragStart*/
-            ctx[20]
+            ctx[21]
           ),
           listen(div1, "dragover", prevent_default(
             /*handleDragOver*/
-            ctx[21]
+            ctx[22]
           )),
           listen(
             div1,
             "dragleave",
             /*handleDragLeave*/
-            ctx[22]
+            ctx[23]
           ),
           listen(
             div1,
             "drop",
             /*handleDrop*/
-            ctx[23]
+            ctx[24]
           ),
           listen(
             div1,
             "contextmenu",
             /*handleContextMenu*/
-            ctx[24]
+            ctx[25]
           ),
           listen(
             div1,
             "click",
             /*click_handler_1*/
-            ctx[34]
+            ctx[35]
           )
         ];
         mounted = true;
@@ -5730,7 +5738,7 @@ function create_fragment(ctx) {
         if_block3.d();
       if (if_block4)
         if_block4.d();
-      ctx[37](null);
+      ctx[38](null);
       mounted = false;
       run_all(dispose);
     }
@@ -5740,8 +5748,8 @@ function instance($$self, $$props, $$invalidate) {
   let tagHighlightStyle;
   let $data;
   let $active_id;
-  component_subscribe($$self, data, ($$value) => $$invalidate(31, $data = $$value));
-  component_subscribe($$self, active_id, ($$value) => $$invalidate(32, $active_id = $$value));
+  component_subscribe($$self, data, ($$value) => $$invalidate(32, $data = $$value));
+  component_subscribe($$self, active_id, ($$value) => $$invalidate(33, $active_id = $$value));
   let { id = "unknown-link-id" } = $$props;
   let { type = "sub_note" } = $$props;
   let { node_path = [] } = $$props;
@@ -5972,7 +5980,8 @@ function instance($$self, $$props, $$invalidate) {
       openNote(id, true);
       return;
     }
-    $$invalidate(6, isCollapsed = !isCollapsed);
+    if (plugin2.settings.expandOnClick)
+      $$invalidate(6, isCollapsed = !isCollapsed);
     openNote(id);
   };
   function note_1_binding($$value, child) {
@@ -5996,12 +6005,12 @@ function instance($$self, $$props, $$invalidate) {
     if ("type" in $$props2)
       $$invalidate(1, type = $$props2.type);
     if ("node_path" in $$props2)
-      $$invalidate(25, node_path = $$props2.node_path);
+      $$invalidate(26, node_path = $$props2.node_path);
   };
   $$self.$$.update = () => {
     if ($$self.$$.dirty[0] & /*id, type, note*/
-    268435459 | $$self.$$.dirty[1] & /*$active_id, $data*/
-    3) {
+    536870915 | $$self.$$.dirty[1] & /*$active_id, $data*/
+    6) {
       $: {
         $$invalidate(2, IsOpened = id == $active_id);
         if (type == "top_dir") {
@@ -6017,13 +6026,13 @@ function instance($$self, $$props, $$invalidate) {
           $$invalidate(7, dataAttrs = {});
         }
         if (type == "sub_note") {
-          $$invalidate(28, note = $data.note_list[id]);
+          $$invalidate(29, note = $data.note_list[id]);
           if (note) {
             $$invalidate(3, title = note.title);
             $$invalidate(4, noteIcon = note.icon || "");
             $$invalidate(5, isPinned = note.is_pinned);
-            $$invalidate(29, highlightColor = note.highlight_color || "");
-            $$invalidate(30, highlightOpacity = note.highlight_opacity || 0);
+            $$invalidate(30, highlightColor = note.highlight_color || "");
+            $$invalidate(31, highlightOpacity = note.highlight_opacity || 0);
             $$invalidate(8, childCounter = note.count_children());
             $$invalidate(9, childList = note.children);
             let attrs = {};
@@ -6035,8 +6044,9 @@ function instance($$self, $$props, $$invalidate) {
         }
       }
     }
-    if ($$self.$$.dirty[0] & /*highlightColor, highlightOpacity, IsOpened*/
-    1610612740) {
+    if ($$self.$$.dirty[0] & /*highlightColor, IsOpened*/
+    1073741828 | $$self.$$.dirty[1] & /*highlightOpacity*/
+    1) {
       $:
         $$invalidate(14, tagHighlightStyle = highlightColor && highlightOpacity > 0 && !IsOpened ? `background-color: color-mix(in srgb, ${highlightColor} ${highlightOpacity * 100}%, transparent)` : "");
     }
@@ -6057,6 +6067,7 @@ function instance($$self, $$props, $$invalidate) {
     expandTransitionEnd,
     dropMode,
     tagHighlightStyle,
+    plugin2,
     applyDataAttrs,
     collapsedIcon,
     expandTransitionStart,
@@ -6094,19 +6105,19 @@ var Note = class extends SvelteComponent {
       {
         id: 0,
         type: 1,
-        node_path: 25,
-        collapse: 26,
-        focusNotes: 27
+        node_path: 26,
+        collapse: 27,
+        focusNotes: 28
       },
       null,
       [-1, -1]
     );
   }
   get collapse() {
-    return this.$$.ctx[26];
+    return this.$$.ctx[27];
   }
   get focusNotes() {
-    return this.$$.ctx[27];
+    return this.$$.ctx[28];
   }
 };
 var Note_default = Note;
@@ -6597,6 +6608,14 @@ var VirtFolderPlugin = class extends import_obsidian9.Plugin {
     this.onResolveMetadata = (file) => {
       this.data.onChange(file);
       this.update_data();
+      if (this.settings.autoReveal) {
+        let activeFile = this.app.workspace.getActiveFile();
+        if (activeFile && activeFile.path === file.path) {
+          let path = this.base.get_next_path(file.path);
+          if (path)
+            this.revealFile(path);
+        }
+      }
     };
   }
   async onload() {
@@ -7157,6 +7176,12 @@ var WHATSNEW_MD = `
 Thank you for using VirtFolder! \u2764\uFE0F This is an independent project, and every share helps new users discover it. If the plugin is useful to you, consider telling a friend or [starring the repo on GitHub](https://github.com/gr0grig/obsidian-virt-folder) \u2014 it really makes a difference!
 
 ---
+
+## July 2026
+
+- **Open without expanding** \u2014 clicking a note's title now opens it without toggling its children. Expand/collapse is done via the arrow icon. A setting (\`Expand/collapse on title click\`) restores the old click-to-toggle behavior.
+- **Hide orphans** \u2014 optional setting to keep orphan notes (no parents, no children) out of the tree, useful for large vaults and keyboard navigation.
+- **Reveal on folder change fix** \u2014 changing a note's folder property no longer hides it inside a collapsed branch; the active note is re-revealed at its new location.
 
 ## May 2026
 
