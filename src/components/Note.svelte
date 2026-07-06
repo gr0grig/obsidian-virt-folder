@@ -391,8 +391,8 @@
 				openNote(id, true);
 				return;
 			}
-			
-			isCollapsed = !isCollapsed;
+
+			if(plugin.settings.expandOnClick) isCollapsed = !isCollapsed;
 			openNote(id);
 		}}
 	>

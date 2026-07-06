@@ -30,6 +30,7 @@ export interface VirtFolderSettings
 	sortTreeBy: SortTypes;
 	sortTreeRev: boolean;
 	hideOrphans: boolean;
+	expandOnClick: boolean;
 	UseWikiLinks: boolean;
 	folderAsString: boolean;
 	confirmDelete: boolean;
@@ -54,6 +55,7 @@ export const DEFAULT_SETTINGS: Partial<VirtFolderSettings> =
 	sortTreeBy: SortTypes.file_name,
 	sortTreeRev: false,
 	hideOrphans: false,
+	expandOnClick: true,
 	UseWikiLinks: true,
 	folderAsString: false,
 	confirmDelete: true,
@@ -238,6 +240,20 @@ export class VirtFolderSettingTab extends PluginSettingTab
 				await this.plugin.saveSettings();
 				this.update_hide_orphans(value);
 				this.update_note_list();
+			});
+		});
+
+
+		new Setting(containerEl)
+		.setName("Expand/collapse on title click")
+		.setDesc("When off, clicking a note's title only opens it; expanding or collapsing its children works via the arrow icon only")
+		.addToggle( (tg:ToggleComponent) =>
+		{
+			tg.setValue(this.plugin.settings.expandOnClick);
+			tg.onChange(async (value) =>
+			{
+				this.plugin.settings.expandOnClick = value;
+				await this.plugin.saveSettings();
 			});
 		});
 
