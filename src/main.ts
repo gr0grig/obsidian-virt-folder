@@ -332,16 +332,27 @@ export default class VirtFolderPlugin extends Plugin
 	  
 	onResolveMetadata = (file: TFile) =>
 	{
+		// Capture the active file's position before the update so we can tell
+		// whether this metadata change relocated it in the tree.
+		let activeFile = this.app.workspace.getActiveFile();
+		let isActive = !!activeFile && activeFile.path === file.path;
+		let oldPath = isActive ? this.base.get_shortest_path(file.path) : undefined;
+
 		this.data.onChange(file);
 		this.update_data();
 
 		// When the active file's folder property changes, it is relocated in the
 		// tree and its Svelte node is recreated in a collapsed state, hiding it
-		// inside a collapsed branch. Re-reveal it so it stays visible (issue #41).
-		if(this.settings.autoReveal)
+		// inside a collapsed branch until an app restart. Re-reveal it at its new
+		// location so it stays visible, mirroring the reveal done on startup.
+		// Only fire on an actual relocation, so unrelated edits (title, tags, ...)
+		// don't needlessly collapse other branches when auto-collapse is on.
+		// (issue #41)
+		if(isActive)
 		{
-			let activeFile = this.app.workspace.getActiveFile();
-			if(activeFile && activeFile.path === file.path)
+			let newPath = this.base.get_shortest_path(file.path);
+			let relocated = (oldPath ? oldPath.join('/') : '') !== (newPath ? newPath.join('/') : '');
+			if(relocated && newPath)
 			{
 				let path = this.base.get_next_path(file.path);
 				if(path) this.revealFile(path);

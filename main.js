@@ -6606,11 +6606,15 @@ var VirtFolderPlugin = class extends import_obsidian9.Plugin {
       }
     };
     this.onResolveMetadata = (file) => {
+      let activeFile = this.app.workspace.getActiveFile();
+      let isActive = !!activeFile && activeFile.path === file.path;
+      let oldPath = isActive ? this.base.get_shortest_path(file.path) : void 0;
       this.data.onChange(file);
       this.update_data();
-      if (this.settings.autoReveal) {
-        let activeFile = this.app.workspace.getActiveFile();
-        if (activeFile && activeFile.path === file.path) {
+      if (isActive) {
+        let newPath = this.base.get_shortest_path(file.path);
+        let relocated = (oldPath ? oldPath.join("/") : "") !== (newPath ? newPath.join("/") : "");
+        if (relocated && newPath) {
           let path = this.base.get_next_path(file.path);
           if (path)
             this.revealFile(path);
