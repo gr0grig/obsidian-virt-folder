@@ -283,7 +283,7 @@ export class VirtFolderSettingTab extends PluginSettingTab
 
 		new Setting(containerEl)
 		.setName("List of ignored tags")
-		.setDesc("Notes with any of these tags will be hidden from the tree. One tag per line, # is optional")
+		.setDesc("Notes with any of these tags or their nested tags will be hidden from the tree. One tag per line, # is optional")
 		.addTextArea((textArea: TextAreaComponent) =>
 		{
 			textArea

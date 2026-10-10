@@ -162,7 +162,7 @@ export class BaseScanner
                     {
                         for (let tag of tags)
                         {
-                            if (this.settings.ignored_tags.includes(tag)) return false;
+                            if (this._is_ignored_tag(tag)) return false;
                         }
                     }
                 }
@@ -665,6 +665,13 @@ export class BaseScanner
 
     // --- incremental updates ---
 
+    _is_ignored_tag(tag: string): boolean
+    {
+        // Match descendants at a tag boundary, not similarly named tags.
+        return this.settings.ignored_tags.some(ignored =>
+            tag === ignored || tag.startsWith(ignored + '/'));
+    }
+
     is_filtered(file: TFile): boolean
     {
         for (let filter of this.settings.filter)
@@ -682,7 +689,7 @@ export class BaseScanner
                 {
                     for (let tag of tags)
                     {
-                        if (this.settings.ignored_tags.includes(tag)) return true;
+                        if (this._is_ignored_tag(tag)) return true;
                     }
                 }
             }

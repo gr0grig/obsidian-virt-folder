@@ -1331,7 +1331,7 @@ var VirtFolderSettingTab = class extends import_obsidian.PluginSettingTab {
       textArea.inputEl.setAttr("rows", 6);
       textArea.inputEl.setAttr("cols", 40);
     });
-    new import_obsidian.Setting(containerEl).setName("List of ignored tags").setDesc("Notes with any of these tags will be hidden from the tree. One tag per line, # is optional").addTextArea((textArea) => {
+    new import_obsidian.Setting(containerEl).setName("List of ignored tags").setDesc("Notes with any of these tags or their nested tags will be hidden from the tree. One tag per line, # is optional").addTextArea((textArea) => {
       textArea.setValue(this.plugin.settings.ignoreTags).setPlaceholder("fleeting\n#daily").onChange(async (value) => {
         this.plugin.settings.ignoreTags = value;
         await this.plugin.saveSettings();
@@ -1652,7 +1652,7 @@ var BaseScanner = class {
           let tags = (0, import_obsidian2.getAllTags)(cache);
           if (tags) {
             for (let tag of tags) {
-              if (this.settings.ignored_tags.includes(tag))
+              if (this._is_ignored_tag(tag))
                 return false;
             }
           }
@@ -2034,6 +2034,9 @@ var BaseScanner = class {
     return path;
   }
   // --- incremental updates ---
+  _is_ignored_tag(tag) {
+    return this.settings.ignored_tags.some((ignored) => tag === ignored || tag.startsWith(ignored + "/"));
+  }
   is_filtered(file) {
     for (let filter of this.settings.filter) {
       if (file.path.startsWith(filter))
@@ -2045,7 +2048,7 @@ var BaseScanner = class {
         let tags = (0, import_obsidian2.getAllTags)(cache);
         if (tags) {
           for (let tag of tags) {
-            if (this.settings.ignored_tags.includes(tag))
+            if (this._is_ignored_tag(tag))
               return true;
           }
         }
