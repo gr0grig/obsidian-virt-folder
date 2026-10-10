@@ -3,6 +3,19 @@
     color: var(--text-muted);
 }
 
+.vf-tree-search {
+    padding: 8px;
+}
+
+.vf-search-status:empty { display: none; }
+.vf-tree-search .search-input-container { width: 100%; }
+.vf-search-status {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    padding-top: 6px;
+    overflow-wrap: anywhere;
+}
+
 .vf_search_link
 {
     background-color: var(--background-secondary-alt);

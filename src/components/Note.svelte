@@ -5,6 +5,7 @@
 	export let id = "unknown-link-id";
 	export let type = "sub_note"; // or "top_dir" or "orphan_dir"
 	export let node_path: string[] = []; // set by parents
+	export let tree: import('../search').SearchTree | undefined = undefined;
 
 	import { getPlugin, data, active_id } from "./stores";
 	import { slide } from "svelte/transition";
@@ -22,7 +23,7 @@
 	let title = id;
 	let noteIcon = '';
 	let isPinned = false;
-	let isCollapsed = true;
+	let isCollapsed = !tree;
 	let IsOpened = false;
 	let highlightColor = '';
 	let highlightOpacity = 0;
@@ -34,6 +35,7 @@
 	// Svelte clears bind:this to null when a keyed child is removed.
 	const children: Record<string, { collapse(): void; focusNotes(path: string[]): Promise<void> } | null> = {};
 
+	$: treeData = tree ?? $data;
 	$:
 	{
 		IsOpened = (id == $active_id);
@@ -41,22 +43,22 @@
 		if(type == "top_dir")
 		{
 			title = 'ROOT';
-			childCounter = $data.top_list.length;
-			childList = $data.top_list;
+			childCounter = treeData.top_list.length;
+			childList = treeData.top_list;
 			dataAttrs = {};
 		}
 
 		if(type == "orphan_dir")
 		{
 			title = 'Orphans';
-			childCounter = $data.orphans_list.length;
-			childList = $data.orphans_list;
+			childCounter = treeData.orphans_list.length;
+			childList = treeData.orphans_list;
 			dataAttrs = {};
 		}
 
 		if(type == "sub_note")
 		{
-			note = $data.note_list[id];
+			note = treeData.note_list[id];
 
 			if (note)
 			{
@@ -65,8 +67,8 @@
 				isPinned = note.is_pinned;
 				highlightColor = note.highlight_color || '';
 				highlightOpacity = note.highlight_opacity || 0;
-				childCounter = note.count_children();
-				childList = note.children;
+				childList = tree ? note.children.filter(child => !node_path.includes(child)) : note.children;
+				childCounter = childList.length;
 
 				let attrs: Record<string, string> = {};
 				for(let key in note.metadata)
@@ -161,7 +163,7 @@
 
 	function handleDragStart(event: DragEvent)
 	{
-		if(type !== 'sub_note' || !event.dataTransfer) return;
+		if(tree || type !== 'sub_note' || !event.dataTransfer) return;
 		event.dataTransfer.setData('text/plain', JSON.stringify({
 			id: id,
 			parentId: getDragParentId(),
@@ -172,6 +174,7 @@
 
 	function handleDragOver(event: DragEvent)
 	{
+		if(tree) return;
 		event.preventDefault();
 		if(event.dataTransfer) event.dataTransfer.dropEffect = 'move';
 
@@ -193,6 +196,7 @@
 
 	function handleDrop(event: DragEvent)
 	{
+		if(tree) return;
 		event.preventDefault();
 		dropMode = 'none';
 		if(!event.dataTransfer) return;
@@ -370,7 +374,7 @@
 		class:vf-drop-after={dropMode === 'after'}
 		style={tagHighlightStyle}
 		use:applyDataAttrs={dataAttrs}
-		draggable={type === 'sub_note'}
+		draggable={type === 'sub_note' && !tree}
 		on:dragstart={handleDragStart}
 		on:dragover|preventDefault={handleDragOver}
 		on:dragleave={handleDragLeave}
@@ -437,7 +441,7 @@
 		>
 
 			{#each childList as child (child)}
-				<svelte:self id={child} node_path="{build_path(child)}" bind:this={children[child]} />
+				<svelte:self id={child} node_path="{build_path(child)}" {tree} bind:this={children[child]} />
 			{/each}
 
 

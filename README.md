@@ -24,6 +24,24 @@ Allows you to quickly find notes by navigating the knowledge base like a book ta
 - Create notes via Unique note creator
 - Front Matter Title plugin support
 - Database optimization
+- Tree search using Obsidian's core search syntax
+
+## Searching the tree
+
+Type in the search box above the tree to filter notes. Queries use
+Obsidian's search engine, including content, `file:`, `path:`, `tag:`, properties,
+quoted phrases, regular expressions, `OR`, and exclusions such as `-term`.
+Results update as notes change. Existing path/tag filters still apply.
+
+Only matching notes are shown. Matching children whose parents do not match are
+shown at the root of the results; matching orphan notes are also searchable.
+Clear the query or press Escape to restore the normal tree and its expanded
+branches. Search is local to each VirtFolder pane and resets when the pane closes.
+Drag-and-drop is disabled while filtering, since some parents may be hidden.
+
+The core query parser is an internal Obsidian API. If an Obsidian version does
+not expose it, the search box displays an error; clearing search still
+restores the normal tree.
 
 ## Documentation
 

@@ -37,6 +37,7 @@ async function loadRuntime() {
           build.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({ contents: `
             export function getIcon() { return document.createElement('span'); }
             export class Notice {} export class Menu {} export class VF_IconPickerModal {}
+            export class Component {} export class MarkdownRenderer {}
             export const SortTypes = { custom: 'custom' };` }));
         },
       },
@@ -53,15 +54,17 @@ async function fixture() {
   const host = document.createElement('div');
   host.className = 'view-content';
   document.body.append(host);
-  const model = { top_list: ['Parent', 'Move'], orphans_list: [], settings: {}, note_list: {} };
+  const model = { top_list: ['Parent', 'Move'], orphans_list: [], settings: {}, note_list: {}, l_sort: ids => [...ids].sort() };
   for (const [id, children] of Object.entries({ Parent: ['Deep'], Deep: [], Move: ['Child'], Child: [] })) {
-    model.note_list[id] = { title: id, children, metadata: {}, count_children() { return this.children.length; } };
+    model.note_list[id] = { title: id, children, parents: [], metadata: {}, count_children() { return this.children.length; } };
   }
+  model.note_list.Deep.parents = ['Parent'];
+  model.note_list.Child.parents = ['Move'];
   r.plugin.set({ settings: { autoCollapse: true }, app: { workspace: { openLinkText() {} } } });
   r.data.set(model);
   const component = new r.Component({ target: host });
   await r.tick();
-  const visible = title => [...host.querySelectorAll('.tree-item-inner')].some(el => el.textContent.trim() === title);
+  const visible = title => [...host.querySelectorAll('.tree-item-inner')].some(el => !el.closest('[hidden]') && el.textContent.trim() === title);
   const reveal = async (pathNotes) => {
     await component.focusTo(pathNotes);
     await new Promise(resolve => setTimeout(resolve, 180));
@@ -89,6 +92,25 @@ test('active root note can move into a deep branch repeatedly with auto-collapse
       assert.ok(f.visible('Child'), 'returning to root still reveals the branch');
       assert.ok(!f.visible('Deep'), 'other branches collapse');
     }
+  } finally { f.destroy(); }
+});
+
+test('search shows only matches and clearing restores expanded branches', { timeout: 5000 }, async () => {
+  const f = await fixture();
+  try {
+    await f.reveal(['top_dir', 'Move']);
+    f.component.$set({ matches: new Set(['Deep']) });
+    await f.r.tick();
+    assert.ok(f.visible('Deep'), 'matching child is promoted past its unmatched parent');
+    assert.ok(!f.visible('Parent'));
+    assert.ok(!f.visible('Move'));
+    f.component.$set({ matches: new Set() });
+    await f.r.tick();
+    assert.ok(!f.visible('Deep'));
+    f.component.$set({ matches: null });
+    await f.r.tick();
+    assert.ok(f.visible('Move'));
+    assert.ok(f.visible('Child'), 'previous expansion is preserved');
   } finally { f.destroy(); }
 });
 

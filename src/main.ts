@@ -787,6 +787,12 @@ Thank you for using VirtFolder! ❤️ This is an independent project, and every
 
 ---
 
+## 1.2.0 — October 2026
+
+- **Search the tree** — a search field is always available above the tree. Filter notes using Obsidian's search syntax, including content, tags, paths, properties, regular expressions, and logical operators. Results update as notes change. Clear the query or press Escape to restore the normal tree and its expanded branches. (#44)
+- **Nested tag exclusions** — ignoring a tag now also hides notes with its subtags. For example, ignoring \`#archive\` hides \`#archive/project\`, while \`#archives\` remains visible. Works both on startup and when editing notes. (#43)
+- **Auto-collapse after moving notes** — moving an active note from the root into a nested folder no longer breaks tree expansion when auto-collapse is enabled. The note is revealed at its new location, and branches remain usable without restarting Obsidian. (#41)
+
 ## July 2026
 
 - **Open without expanding** — clicking a note's title now opens it without toggling its children. Expand/collapse is done via the arrow icon. A setting (\`Expand/collapse on title click\`) restores the old click-to-toggle behavior.
