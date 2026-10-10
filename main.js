@@ -5947,16 +5947,17 @@ function instance($$self, $$props, $$invalidate) {
     $$invalidate(6, isCollapsed = true);
   };
   const focusNotes = (pathNotes) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     $$invalidate(6, isCollapsed = false);
     yield tick();
-    let next = pathNotes.shift();
+    const [next, ...remaining] = pathNotes;
     if (next && plugin2.settings.autoCollapse) {
       for (let key in children2) {
         if (key !== next)
-          children2[key].collapse();
+          (_a = children2[key]) === null || _a === void 0 ? void 0 : _a.collapse();
       }
     }
-    if (pathNotes.length === 0)
+    if (remaining.length === 0)
       yield expandTransitionWaiter;
     if (!next) {
       if (myElement) {
@@ -5964,9 +5965,7 @@ function instance($$self, $$props, $$invalidate) {
       }
       return;
     }
-    if (next in children2) {
-      children2[next].focusNotes(pathNotes);
-    }
+    yield (_b = children2[next]) === null || _b === void 0 ? void 0 : _b.focusNotes(remaining);
   });
   const click_handler = () => {
     $$invalidate(6, isCollapsed = !isCollapsed);
@@ -6309,10 +6308,14 @@ function instance2($$self, $$props, $$invalidate) {
   component_subscribe($$self, data, ($$value) => $$invalidate(1, $data = $$value));
   const children2 = {};
   function focusTo(pathNotes) {
-    let first = pathNotes.shift();
-    if (!first || !(first in children2))
-      return;
-    children2[first].focusNotes(pathNotes);
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
+      yield tick();
+      const [first, ...remaining] = pathNotes;
+      if (!first)
+        return;
+      yield (_a = children2[first]) === null || _a === void 0 ? void 0 : _a.focusNotes(remaining);
+    });
   }
   function note_binding($$value) {
     binding_callbacks[$$value ? "unshift" : "push"](() => {

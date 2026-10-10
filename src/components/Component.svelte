@@ -1,14 +1,17 @@
 <script lang="ts">
 	import Note from "./Note.svelte";
 	import { data } from './stores';
+	import { tick } from 'svelte';
 
-	const children: Record<string, Note> = {};
+	const children: Record<string, Note | null> = {};
 
-	export function focusTo(pathNotes: string[])
+	export async function focusTo(pathNotes: string[])
 	{
-		let first:string|undefined = pathNotes.shift();
-		if(!first || !(first in children)) return;
-		children[first].focusNotes(pathNotes);
+		// Relocation can create/remove root components during the next flush.
+		await tick();
+		const [first, ...remaining] = pathNotes;
+		if(!first) return;
+		await children[first]?.focusNotes(remaining);
 	}
 
 </script>

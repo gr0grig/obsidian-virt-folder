@@ -31,7 +31,8 @@
     let childCounter = 0;
 	let childList: any[] = [];
 	let myElement: HTMLDivElement;
-	const children: Record<string, any> = {};
+	// Svelte clears bind:this to null when a keyed child is removed.
+	const children: Record<string, { collapse(): void; focusNotes(path: string[]): Promise<void> } | null> = {};
 
 	$:
 	{
@@ -327,18 +328,18 @@
 		isCollapsed = false;
 		await tick();
 
-		let next:string|undefined = pathNotes.shift();
+		const [next, ...remaining] = pathNotes;
 
 		if(next && plugin.settings.autoCollapse)
 		{
 			// collapse sibling branches that are not on the path to the active note
 			for(let key in children)
 			{
-				if(key !== next) children[key].collapse();
+				if(key !== next) children[key]?.collapse();
 			}
 		}
 
-		if(pathNotes.length === 0) await expandTransitionWaiter;
+		if(remaining.length === 0) await expandTransitionWaiter;
 
 		if(!next)
 		{
@@ -349,10 +350,7 @@
 			return;
 		}
 
-		if(next in children)
-		{
-			children[next].focusNotes(pathNotes);
-		}
+		await children[next]?.focusNotes(remaining);
 	}
 
 
